@@ -1,0 +1,18 @@
+
+export S3_ENDPOINT=some-endpoint.com
+export S3_ACCESS_KEY=access_key
+export S3_SECRET_KEY=a_very_secret_key
+
+### GENERATED CONFIG BELOW THIS LINE, DO NOT EDIT!
+
+export CONSUL_HTTP_ADDR=https://195.201.217.37:8501
+export CONSUL_HTTP_TOKEN=token-token-token
+export CONSUL_HTTP_SSL=true
+export CONSUL_HTTP_SSL_VERIFY=false
+export CONSUL_CLIENT_CERT=config/secrets/consul/consul-agent-ca.pem
+export CONSUL_CLIENT_KEY=config/secrets/consul/consul-agent-ca-key.pem
+
+export NOMAD_ADDR=https://195.201.217.37:4646
+export NOMAD_CACERT=config/secrets/nomad/nomad-ca.pem
+export NOMAD_CLIENT_CERT=config/secrets/nomad/client.pem
+export NOMAD_CLIENT_KEY=config/secrets/nomad/client-key.pem

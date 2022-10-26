@@ -1,0 +1,13 @@
+Key                Value
+---                -----
+Seal Type          shamir
+Initialized        false
+Sealed             true
+Total Shares       0
+Threshold          0
+Unseal Progress    0/0
+Unseal Nonce       n/a
+Version            1.11.2
+Build Date         2022-07-29T09:48:47Z
+Storage Type       consul
+HA Enabled         true

@@ -1,0 +1,82 @@
+- hosts: vault_servers 
+  become: yes
+  tasks:
+    - name: add vault user
+      user: name='vault' groups="vault"
+    - name: Creates config dir
+      file:
+        path: /etc/vault.d
+        state: directory
+        owner: vault
+        group: vault
+        mode: 0755
+    - name: Creates certs dir
+      file:
+        path: /etc/vault.d/certs
+        state: directory
+        owner: vault
+        group: vault
+        mode: 0755
+
+    - name: Creates data dir
+      file:
+        path: /opt/vault
+        state: directory
+        owner: vault
+        group: vault
+        mode: 0755
+    - name: copy config
+      template:
+        src: vault/config.hcl
+        dest: /etc/vault.d/config.hcl
+        owner: vault
+        group: vault
+        mode: 0755
+    - name: copy consul agent ca 
+      copy:
+        src: secrets/consul/consul-agent-ca.pem
+        dest: /etc/vault.d/certs/consul-agent-ca.pem
+        owner: vault
+        group: vault
+        mode: 0755
+    - name: copy consul agent ca 
+      copy:
+        src: secrets/consul/consul-agent-ca-key.pem
+        dest: /etc/vault.d/certs/consul-agent-ca-key.pem
+        owner: vault
+        group: vault
+        mode: 0755
+    - name: copy certificate pem
+      copy:
+        src: secrets/vault/tls.crt
+        dest: /etc/vault.d/certs/tls.crt
+        owner: vault
+        group: vault
+        mode: 0644
+
+    - name: copy key pem
+      copy:
+        src: secrets/vault/tls.key
+        dest: /etc/vault.d/certs/tls.key
+        owner: vault
+        group: vault
+        mode: 0644
+
+    - name: copy vault service
+      copy:
+        src: vault/vault.service
+        dest: /etc/systemd/system/vault.service
+        mode: 0755
+- hosts: vault_servers
+  become: yes
+  serial: 1  
+  tasks:
+    - name: start vault service on boot
+      ansible.builtin.systemd:
+        enabled: yes
+        name: vault
+    - name: Restart vault service
+      ansible.builtin.systemd:
+        state: restarted
+        daemon_reload: yes
+        name: vault

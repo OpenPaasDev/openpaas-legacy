@@ -1,0 +1,67 @@
+# Setup data dir
+data_dir = "/opt/nomad"
+datacenter = "dc1"
+
+log_level = "INFO"
+log_json = true
+log_file = "/var/log/nomad/nomad.log"
+log_rotate_max_files = 6
+
+# Enable the server
+server {
+  enabled = true
+  encrypt = "{{ NOMAD_GOSSIP_KEY }}"
+
+  # Self-elect, should be 3 or 5 for production
+  bootstrap_expect = EXPECTS_NO
+}
+#bind_addr = "0.0.0.0" #was private_ip, but for Contabo, it was same as public
+
+advertise {
+  # Defaults to the first private IP address.
+  http = "{{ private_ip }}"
+  rpc  = "{{ private_ip }}"
+  serf = "{{ private_ip }}"
+}
+
+# Require TLS
+tls {
+  http = true
+  rpc  = true
+
+  ca_file   = "/etc/nomad.d/certs/nomad-ca.pem"
+  cert_file = "/etc/nomad.d/certs/server.pem"
+  key_file  = "/etc/nomad.d/certs/server-key.pem"
+
+  verify_server_hostname = true
+  verify_https_client    = true # breaks browser, but necessary for authed access to CLI
+}
+
+consul{
+  token = "{{NOMAD_SERVER_CONSUL_TOKEN}}"
+  address =  "127.0.0.1:8501"
+  cert_file = "/etc/consul.d/certs/consul-agent-ca.pem"
+  key_file = "/etc/consul.d/certs/consul-agent-ca-key.pem"
+  ssl = true
+  verify_ssl = false
+}
+
+telemetry {
+  collection_interval = "60s"
+  disable_hostname = true
+  prometheus_metrics = true
+  publish_allocation_metrics = true
+  publish_node_metrics = true
+}
+
+
+vault {
+  tls_skip_verify = true
+  token = "{{vault.nomad_root_token}}"
+  enabled          = true
+#  ca_path          = "/etc/certs/ca"
+  cert_file        = "/etc/nomad.d/certs/vault/tls.crt"
+  key_file         = "/etc/nomad.d/certs/vault/tls.key"
+  address          = "https://active.vault.service.consul:8200"
+  create_from_role = "nomad-cluster"
+}

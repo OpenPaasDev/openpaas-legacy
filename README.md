@@ -1,5 +1,5 @@
-# Velodrome
-Single-command: `velodrome sync --config.file config.yaml` that sets up a full _"Hashistack"_ cluster consisting of:
+# OpenPaaS
+Single-command: `openpaas sync --config.file config.yaml` that sets up a full _"Hashistack"_ cluster consisting of:
 * Infrastructure 
     * Currently supports [Hetzner](https://www.hetzner.com)
     * Other clouds coming
@@ -23,12 +23,12 @@ Single-command: `velodrome sync --config.file config.yaml` that sets up a full _
 
 Networking is setup so your bastion host (`allowed_ips`) have full access to the cluster, while Cloudflare IPs have access to 443, exposed by `Fabio LB`.
 
-Below is a reference architecture of what is created, and how it should be used. Velodrome concerns itself with the left side of the diagram, GitOps repo and operator is for you to implement (we may build something for this later):
+Below is a reference architecture of what is created, and how it should be used. OpenPaaS concerns itself with the left side of the diagram, GitOps repo and operator is for you to implement (we may build something for this later):
 
 ![Hashistack](Hashistack.jpg)
 # Pre-requisites
 ## Pre-requisite software
-Your machine/operator node will need the following pre-installed (velodrome will check for presence before execution):
+Your machine/operator node will need the following pre-installed (openpaas will check for presence before execution):
 * `nomad`
 * `consul`
 * `vault`
@@ -37,9 +37,9 @@ Your machine/operator node will need the following pre-installed (velodrome will
 * `cfssl` & `cfssljson`
 
 You probably want to also use [git secret](https://git-secret.io) to protect your `[base_dir]/secrets` directory in the generated files.
-Additionally, [direnv](https://direnv.net) will make life easier, as `velodrome genenv --config.file [config]` will generate a direnv compatible `.envrc` file for you.
+Additionally, [direnv](https://direnv.net) will make life easier, as `openpaas genenv --config.file [config]` will generate a direnv compatible `.envrc` file for you.
 
-To ensure other env variables are preserved with `velodrome genenv`, just add this line into an existing `.envrc` file:
+To ensure other env variables are preserved with `openpaas genenv`, just add this line into an existing `.envrc` file:
 
 ```
 ### GENERATED CONFIG BELOW THIS LINE, DO NOT EDIT!
@@ -58,7 +58,7 @@ To ensure other env variables are preserved with `velodrome genenv`, just add th
 * S3 compatible buckets pre-setup as per your `config.yaml`.
 
 ## Setup
-Once all of the above steps are setup, just run `velodrome sync --config.file [config file]`. If no cluster exists, it will be setup for you. If one exists, it will be synced with your config, setting up the entire cluster.
+Once all of the above steps are setup, just run `openpaas sync --config.file [config file]`. If no cluster exists, it will be setup for you. If one exists, it will be synced with your config, setting up the entire cluster.
 
 *IMPORTANT!*
 If you intend to use an SSH key other than your system-default one, please run the following first:
@@ -80,7 +80,7 @@ By default, we will setup ingresses for:
 Once, you have setup DNS records for these, you'll be able to login.
 Please change the default Grafana password immediately! (default is `admin/admin`).
 
-Consul login is `consul/[CONSUL ROOT-TOKEN]`, the root-token can be found in your `.envrc` after running `velodrome genenv`.
+Consul login is `consul/[CONSUL ROOT-TOKEN]`, the root-token can be found in your `.envrc` after running `openpaas genenv`.
 
 ## Observability
 ### Add data sources in Grafana

@@ -1,0 +1,81 @@
+---
+- hosts: all,!consul_servers
+  become: yes
+  tasks:
+    - name: Creates data dir
+      file:
+        path: /opt/consul
+        state: directory
+        owner: consul
+        group: consul
+        mode: 0755
+      when: consul_mount is not defined
+    - name: copy agent config
+      template:
+        src: consul/client.j2
+        dest: /etc/consul.d/consul.hcl
+        owner: consul
+        group: consul
+        mode: 0644
+      when: consul_mount is not defined
+- hosts: consul_servers
+  become: yes
+
+  tasks:
+    - name: copy agent ca 
+      copy:
+        src: secrets/consul/consul-agent-ca.pem
+        dest: /etc/consul.d/certs/consul-agent-ca.pem
+        owner: consul
+        group: consul
+        mode: 0644
+    - name: copy server pem
+      copy:
+        src: secrets/consul/dc1-server-consul-0.pem
+        dest: /etc/consul.d/certs/dc1-server-consul-0.pem
+        owner: consul
+        group: consul
+        mode: 0644
+    - name: copy server key
+      copy:
+        src: secrets/consul/dc1-server-consul-0-key.pem
+        dest: /etc/consul.d/certs/dc1-server-consul-0-key.pem
+        owner: consul
+        group: consul
+        mode: 0644
+    - name: copy server config
+      template:
+        src: consul/server.j2
+        dest: /etc/consul.d/consul.hcl
+        owner: consul
+        group: consul
+        mode: 0644
+
+- hosts: all 
+  become: yes
+  serial: 1
+
+  tasks:
+    - name: start consul service on boot
+      ansible.builtin.systemd:
+        enabled: yes
+        name: consul
+    - name: start consul-exporter service on boot
+      ansible.builtin.systemd:
+        enabled: yes
+        name: consul-exporter
+    - name: Restart consul service
+      ansible.builtin.systemd:
+        state: restarted
+        daemon_reload: yes
+        name: consul
+    - name: Restart consul-exporter service
+      ansible.builtin.systemd:
+        state: restarted
+        daemon_reload: yes
+        name: consul-exporter
+    - name: Restart resolved service
+      ansible.builtin.systemd:
+        state: restarted
+        daemon_reload: yes
+        name:  systemd-resolved

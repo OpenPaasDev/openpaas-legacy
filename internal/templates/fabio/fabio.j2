@@ -1,0 +1,7 @@
+registry.consul.token = {{FABIO_CONSUL_TOKEN}}
+
+ui.access = ro
+
+proxy.addr = :80;
+proxy.auth = name=consul-auth;type=basic;file=/etc/fabio.d/consul.htpasswd;
+proxy.gzip.contenttype = ^(text/.*|application/(javascript|json|font-woff|xml)|.*\\+(json|xml))(;.*)?$

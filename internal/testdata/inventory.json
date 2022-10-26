@@ -1,0 +1,60 @@
+{
+  "client_servers": {
+    "sensitive": false,
+    "type": [
+      "tuple",
+      [
+        "string",
+        "string"
+      ]
+    ],
+    "value": [
+      "159.69.147.86 host_name=nomad-srv-client-1 private_ip=10.0.3.2",
+      "195.201.127.116 host_name=nomad-srv-client-2 private_ip=10.0.3.3"
+    ]
+  },
+  "consul_servers": {
+    "sensitive": false,
+    "type": [
+      "tuple",
+      []
+    ],
+    "value": []
+  },
+  "nomad_servers": {
+    "sensitive": false,
+    "type": [
+      "tuple",
+      [
+        "string",
+        "string",
+        "string"
+      ]
+    ],
+    "value": [
+      "116.203.48.99 host_name=nomad-srv-nomad-server-1 private_ip=10.0.1.2",
+      "195.201.124.132 host_name=nomad-srv-nomad-server-2 private_ip=10.0.1.3",
+      "116.203.21.77 host_name=nomad-srv-nomad-server-3 private_ip=10.0.1.4"
+    ]
+  },
+  "o11y_servers": {
+    "sensitive": false,
+    "type": [
+      "tuple",
+      [
+        "string"
+      ]
+    ],
+    "value": [
+      "195.201.126.249 host_name=nomad-srv-observability-1 private_ip=10.0.4.2"
+    ]
+  },
+  "vault_servers": {
+    "sensitive": false,
+    "type": [
+      "tuple",
+      []
+    ],
+    "value": []
+  }
+}

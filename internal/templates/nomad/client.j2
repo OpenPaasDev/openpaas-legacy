@@ -1,0 +1,79 @@
+# Increase log verbosity
+log_level = "INFO"
+log_json = true
+log_file = "/var/log/nomad/nomad.log"
+log_rotate_max_files = 6
+
+# Setup data dir
+data_dir = "/opt/nomad"
+
+datacenter = "dc1"
+
+bind_addr = "{{private_ip}}" 
+
+
+# Enable the client
+client {
+  enabled = true
+  host_volume "docker-sock-ro" {
+    path = "/var/run/docker.sock"
+    read_only = true
+  }
+
+  {% for volume in mounts %}
+  host_volume "{{volume.name}}" {
+    path      = "{{volume.path}}"
+    read_only = false
+  }
+  {% endfor %}
+  network_interface = "{{cloud_provider_config.internal_network_interface_name}}"
+}
+
+
+
+# Require TLS
+tls {
+  http = true
+  rpc  = true
+
+  ca_file   = "/etc/nomad.d/certs/nomad-ca.pem"
+  cert_file = "/etc/nomad.d/certs/client.pem"
+  key_file  = "/etc/nomad.d/certs/client-key.pem"
+
+  verify_server_hostname = true
+  verify_https_client    = true
+}
+
+consul{
+  token = "{{NOMAD_CLIENT_CONSUL_TOKEN}}"
+  address =  "127.0.0.1:8501"
+  cert_file = "/etc/consul.d/certs/consul-agent-ca.pem"
+  key_file = "/etc/consul.d/certs/consul-agent-ca-key.pem"
+  ssl = true
+  verify_ssl = false
+}
+
+telemetry {
+  collection_interval = "60s"
+  disable_hostname = true
+  prometheus_metrics = true
+  publish_allocation_metrics = true
+  publish_node_metrics = true
+}
+
+plugin "docker" {
+  config {
+    # extra Docker labels to be set by Nomad on each Docker container with the appropriate value
+    extra_labels = ["job_name", "task_group_name", "task_name", "namespace", "node_name"]
+  }
+}
+
+
+vault {
+  tls_skip_verify = true
+  enabled          = true
+#  ca_path          = "/etc/certs/ca"
+#  cert_file        = "/etc/nomad.d/certs/vault/tls.crt"
+#  key_file         = "/etc/nomad.d/certs/vault/tls.key"
+  address          = "https://active.vault.service.consul:8200"
+}

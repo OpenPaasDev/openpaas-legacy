@@ -1,0 +1,18 @@
+[Unit]
+Description="Consul Exporter"
+Wants=consul.service
+After=consul.service
+
+[Service]
+User=consul
+Group=consul
+ExecStart=/usr/bin/consul_exporter
+ExecReload=/bin/kill --signal HUP $MAINPID
+KillMode=process
+KillSignal=SIGTERM
+Restart=on-failure
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
+

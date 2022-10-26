@@ -1,0 +1,20 @@
+[Unit]
+Description="HashiCorp Vault"
+Requires=network-online.target
+After=network-online.target
+#ConditionFileNotEmpty=/etc/vault.d/config.hcl
+
+[Service]
+#EnvironmentFile=-/etc/consul.d/consul.env
+User=vault
+Group=vault
+ExecStart=/usr/bin/vault server -config=/etc/vault.d/config.hcl
+ExecReload=/bin/kill --signal HUP $MAINPID
+KillMode=process
+KillSignal=SIGTERM
+Restart=on-failure
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
+

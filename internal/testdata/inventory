@@ -1,0 +1,60 @@
+all:
+  children:
+    consul_servers:
+      hosts:
+        127.0.0.1:
+          private_ip: 10.0.0.1 
+          host_name: ubuntu1
+        127.0.0.2:
+          private_ip: 10.0.0.2
+          host_name: ubuntu2
+        127.0.0.3:
+          private_ip: 10.0.0.3 
+          host_name: ubuntu3
+    nomad_servers:
+      hosts:
+        127.0.0.1:
+          private_ip: 10.0.0.1 
+          host_name: ubuntu1
+        127.0.0.2:
+          private_ip: 10.0.0.2
+          host_name: ubuntu2
+        127.0.0.3:
+          private_ip: 10.0.0.3 
+          host_name: ubuntu3
+    vault_servers:
+      hosts:
+        127.0.0.6:
+          private_ip: 10.0.1.1 
+          host_name: vault1
+        127.0.0.7:
+          private_ip: 10.0.1.2
+          host_name: vault2
+    clients:
+      hosts:
+        127.0.0.4:
+          private_ip: 10.0.0.5 
+          host_name: ubuntu4
+        127.0.0.5:
+          private_ip: 10.0.0.4
+          host_name: ubuntu5
+    grafana:
+      hosts:
+        195.201.222.106:
+          private_ip: 10.0.0.7 
+          host_name: nomad-srv6
+    prometheus:
+      hosts:
+        195.201.222.106:
+          private_ip: 10.0.0.7 
+          host_name: nomad-srv6
+    loki:
+      hosts:
+        195.201.222.106:
+          private_ip: 10.0.0.7 
+          host_name: nomad-srv6
+    tempo:
+      hosts:
+        195.201.222.106:
+          private_ip: 10.0.0.7 
+          host_name: nomad-srv6

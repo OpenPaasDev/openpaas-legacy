@@ -1,0 +1,236 @@
+---
+- hosts: clients
+  become: yes
+  tasks:
+    - name: add group fabio
+      group: name='fabio'
+    - name: add fabio user
+      user: name='fabio' groups="fabio"
+    - name: Creates fabio dir
+      file:
+        path: /etc/fabio.d/
+        state: directory
+        owner: fabio
+        group: fabio
+        mode: 0755
+    - name: copy fabio-installer
+      copy:
+        src: fabio/install-fabio.sh
+        dest: '{{cloud_provider_config.sudo_dir}}/install-fabio.sh'
+        mode: 0755
+    - name: Install fabio
+      ansible.builtin.command: '{{cloud_provider_config.sudo_dir}}/install-fabio.sh'
+    - name: Allow fabio to bind to low port
+      ansible.builtin.command: setcap 'cap_net_bind_service=+ep' /usr/local/bin/fabio
+    - name: copy consul htpasswd
+      copy:
+        src: secrets/consul.htpasswd
+        dest: /etc/fabio.d/consul.htpasswd
+        owner: fabio
+        group: fabio
+        mode: 0755
+    - name: copy fabio config
+      template:
+        src: fabio/fabio.j2
+        dest: /etc/fabio.d/fabio.conf
+        owner: fabio
+        group: fabio
+        mode: 0755
+    - name: copy service
+      copy:
+        src: fabio/fabio.service
+        dest: /etc/systemd/system/fabio.service
+        mode: 0755
+    - name: Creates log dir
+      file:
+        path: /var/log/nomad
+        state: directory
+        owner: root
+        group: root
+        mode: 0755
+    - name: Creates config dir
+      file:
+        path: /etc/nomad.d
+        state: directory
+        owner: root
+        group: root
+        mode: 0755
+    - name: Creates certs dir
+      file:
+        path: /etc/nomad.d/certs
+        state: directory
+        owner: root
+        group: root
+        mode: 0755
+    - name: Creates vault certs dir
+      file:
+        path: /etc/nomad.d/certs/vault
+        state: directory
+        owner: nomad
+        group: nomad
+        mode: 0755
+
+    - name: copy vault pem
+      copy:
+        src: secrets/vault/tls.key
+        dest: /etc/nomad.d/certs/vault/tls.key
+        owner: vault
+        group: vault
+        mode: 0644
+
+    - name: copy vault crt
+      copy:
+        src: secrets/vault/tls.crt
+        dest: /etc/nomad.d/certs/vault/tls.crt
+        owner: vault
+        group: vault
+        mode: 0644
+
+    - name: Creates data dir
+      file:
+        path: /opt/nomad
+        state: directory
+        owner: root
+        group: root
+        mode: 0700
+    - name: copy nomad ca
+      copy:
+        src: secrets/nomad/nomad-ca.pem
+        dest: /etc/nomad.d/certs/nomad-ca.pem
+        owner: root
+        group: root
+        mode: 0755
+    - name: copy client.pem
+      copy:
+        src: secrets/nomad/client.pem
+        dest: /etc/nomad.d/certs/client.pem
+        owner: root
+        group: root
+        mode: 0755
+    - name: copy client-key.pem
+      copy:
+        src: secrets/nomad/client-key.pem
+        dest: /etc/nomad.d/certs/client-key.pem
+        owner: root
+        group: root
+        mode: 0755
+    - name: copy config
+      template:
+        src: nomad/client.j2
+        dest: /etc/nomad.d/nomad.hcl
+        owner: root
+        group: root
+        mode: 0755
+    - name: copy service
+      copy:
+        src: nomad/nomad-client.service
+        dest: /etc/systemd/system/nomad.service
+        mode: 0755
+
+- hosts: nomad_servers
+  become: yes
+  tasks:
+    - name: Creates log dir
+      file:
+        path: /var/log/nomad
+        state: directory
+        owner: nomad
+        group: nomad
+        mode: 0755
+    - name: Creates config dir
+      file:
+        path: /etc/nomad.d
+        state: directory
+        owner: nomad
+        group: nomad
+        mode: 0755
+    - name: Creates certs dir
+      file:
+        path: /etc/nomad.d/certs
+        state: directory
+        owner: nomad
+        group: nomad
+        mode: 0755
+    - name: Creates vault certs dir
+      file:
+        path: /etc/nomad.d/certs/vault
+        state: directory
+        owner: nomad
+        group: nomad
+        mode: 0755
+
+    - name: copy vault pem
+      copy:
+        src: secrets/vault/tls.key
+        dest: /etc/nomad.d/certs/vault/tls.key
+        owner: vault
+        group: vault
+        mode: 0644
+
+    - name: copy vault crt
+      copy:
+        src: secrets/vault/tls.crt
+        dest: /etc/nomad.d/certs/vault/tls.crt
+        owner: vault
+        group: vault
+        mode: 0644
+
+    - name: Creates data dir
+      file:
+        path: /opt/nomad
+        state: directory
+        owner: nomad
+        group: nomad
+        mode: 0755
+    - name: copy nomad ca
+      copy:
+        src: secrets/nomad/nomad-ca.pem
+        dest: /etc/nomad.d/certs/nomad-ca.pem
+        mode: 0755
+    - name: copy server.pem
+      copy:
+        src: secrets/nomad/server.pem
+        dest: /etc/nomad.d/certs/server.pem
+        mode: 0755
+    - name: copy server-key.pem
+      copy:
+        src: secrets/nomad/server-key.pem
+        dest: /etc/nomad.d/certs/server-key.pem
+        mode: 0755
+    - name: copy config
+      template:
+        src: nomad/server.j2
+        dest: /etc/nomad.d/nomad.hcl
+        mode: 0755
+    - name: copy service
+      copy:
+        src: nomad/nomad-server.service
+        dest: /etc/systemd/system/nomad.service
+        mode: 0755
+   ### nomad clients and servers   
+- hosts: nomad_servers:clients 
+  become: yes
+  serial: 1  
+  tasks:
+    - name: start nomad service on boot
+      ansible.builtin.systemd:
+        enabled: yes
+        name: nomad
+    - name: Restart nomad service
+      ansible.builtin.systemd:
+        state: restarted
+        daemon_reload: yes
+        name: nomad
+- hosts: clients 
+  become: yes
+  serial: 1  
+  tasks:
+    - name: start fabio service on boot
+      ansible.builtin.systemd:
+        enabled: yes
+        name: fabio
+    - name: Restart fabio service
+      ansible.builtin.systemd:
+        state: restarted
+        daemon_reload: yes
+        name: fabio

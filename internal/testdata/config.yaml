@@ -1,0 +1,33 @@
+dc_name: hetzner
+inventory: datacenters/hetzner/inventory
+base_dir: config
+org_name: chaordic
+
+cluster_config:
+  servers: 3 # 3 or 5
+  clients: 2
+  vault_servers: 2
+  separate_consul_servers: false
+
+observability_config:
+  multi_instance: false # sets all on 1 server if false, 4 separate if true
+  tempo_bucket: tempo
+  loki_bucket: loki
+
+cloud_provider_config:
+  internal_network_interface_name: ens10
+  sudo_user: root
+  provider: hetzner
+  provider_settings:
+    location: nbg1
+    ssh_keys:
+    - wille.faler@gmail.com
+    server_instance_type: cx21
+    client_instance_type: cx21
+    observability_instance_type: cx21
+    resource_names:
+      base_server_name: nomad-srv
+      firewall_name: dev_firewall
+      network_name: dev_network
+    allowed_ips:
+    - 85.4.84.201/32
