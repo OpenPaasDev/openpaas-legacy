@@ -269,7 +269,7 @@ func makeConfigs(inventory Inventory, baseDir, dcName string) error {
 		filepath.Join(baseDir, "nomad", "nomad-server.service"): nomadServerService,
 		filepath.Join(baseDir, "nomad", "nomad-client.service"): nomadClientService,
 
-		filepath.Join(baseDir, "nomad", "web.hcl"):         strings.Replace(nomadHealthCheck, "{DATACENTRE}", dcName, 0),
+		filepath.Join(baseDir, "nomad", "web.hcl"):         strings.Replace(nomadHealthCheck, "{DATACENTRE}", dcName, -1),
 		filepath.Join(baseDir, "consul", "consul.service"): consulService,
 		filepath.Join(baseDir, "vault", "vault.service"):   vaultService,
 		filepath.Join(baseDir, "vault", "config.hcl"):      vaultConf,
