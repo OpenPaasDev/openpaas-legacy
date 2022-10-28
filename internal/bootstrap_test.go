@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/OpenPaas/openpaas/internal/ansible"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v3"
 )
@@ -33,7 +34,7 @@ func TestMakeConsulPoliciesAndHashiConfigs(t *testing.T) {
 	defer func() {
 		assert.NoError(t, os.RemoveAll(filepath.Clean((filepath.Join(folder)))))
 	}()
-	inv, err := LoadInventory(filepath.Clean(filepath.Join("testdata", "inventory")))
+	inv, err := ansible.LoadInventory(filepath.Clean(filepath.Join("testdata", "inventory")))
 	assert.NoError(t, err)
 	err = makeConsulPolicies(inv, folder)
 	assert.NoError(t, err)
@@ -53,9 +54,9 @@ func TestMakeConsulPoliciesAndHashiConfigs(t *testing.T) {
 	_, err = os.ReadFile(filepath.Clean(filepath.Join(folder, "consul", "nomad-client-policy.hcl")))
 	assert.NoError(t, err)
 
-	inv, err = LoadInventory(filepath.Clean(filepath.Join("testdata", "inventory")))
+	inv, err = ansible.LoadInventory(filepath.Clean(filepath.Join("testdata", "inventory")))
 	assert.NoError(t, err)
-	assert.NoError(t, makeConfigs(*inv, folder, "hetzner"))
+	assert.NoError(t, makeConfigs(inv, folder, "hetzner"))
 
 	serverBytes, err := os.ReadFile(filepath.Clean(filepath.Join(folder, "consul", "server.j2")))
 	assert.NoError(t, err)
@@ -89,13 +90,13 @@ func TestMakeSecrets(t *testing.T) {
 		err := os.RemoveAll(folder)
 		assert.NoError(t, err)
 	}()
-	inv, err := LoadInventory(filepath.Join("testdata", "inventory"))
+	inv, err := ansible.LoadInventory(filepath.Join("testdata", "inventory"))
 	assert.NoError(t, err)
-	err = Secrets(*inv, folder, "dc1")
+	err = Secrets(inv, folder, "dc1")
 	assert.NoError(t, err)
 	bytes, err := os.ReadFile(filepath.Clean(filepath.Join(folder, "secrets", "secrets.yml")))
 	assert.NoError(t, err)
-	err = Secrets(*inv, folder, "dc1")
+	err = Secrets(inv, folder, "dc1")
 	assert.NoError(t, err)
 	bytes2, err := os.ReadFile(filepath.Clean(filepath.Join(folder, "secrets", "secrets.yml")))
 	assert.NoError(t, err)

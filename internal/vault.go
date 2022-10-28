@@ -10,6 +10,9 @@ import (
 	"strings"
 
 	_ "embed"
+
+	"github.com/OpenPaas/openpaas/internal/ansible"
+	"github.com/OpenPaas/openpaas/internal/secrets"
 )
 
 //go:embed templates/vault/nomad-server-policy.hcl
@@ -18,7 +21,7 @@ var vaultServerPolicy string
 //go:embed templates/vault/token-role.json
 var vaultTokenRole string
 
-func generateTLS(config *Config, inventory *Inventory) error {
+func generateTLS(config *Config, inventory *ansible.Inventory) error {
 	outputDir := filepath.Join(config.BaseDir, "secrets", "vault")
 	if _, err := os.Stat(filepath.Join(outputDir, "tls.key")); errors.Is(err, os.ErrNotExist) {
 		err := os.MkdirAll(outputDir, 0700)
@@ -44,7 +47,7 @@ func generateTLS(config *Config, inventory *Inventory) error {
 	return nil
 }
 
-func Vault(config *Config, inventory *Inventory) error {
+func Vault(config *Config, inventory *ansible.Inventory) error {
 	outputDir := filepath.Join(config.BaseDir, "secrets", "vault")
 	initFile := filepath.Join(outputDir, "init.txt")
 	vaultHosts := inventory.All.Children.VaultServers.GetHosts()
@@ -84,7 +87,7 @@ func Vault(config *Config, inventory *Inventory) error {
 	return writeSecrets(config.BaseDir, secrets)
 }
 
-func initVault(baseDir, initFile string, vaultHosts []string, secrets *secretsConfig) (*secretsConfig, error) {
+func initVault(baseDir, initFile string, vaultHosts []string, secrets *secrets.Config) (*secrets.Config, error) {
 	envVars := fmt.Sprintf("export VAULT_SKIP_VERIFY=true && export VAULT_ADDR=https://%s:8200 && ", vaultHosts[0])
 	err := runCmd("", fmt.Sprintf("%s vault operator init > %s", envVars, initFile), os.Stdout)
 	if err != nil {
@@ -106,7 +109,7 @@ func initVault(baseDir, initFile string, vaultHosts []string, secrets *secretsCo
 	return secrets, nil
 }
 
-func enableSecrets(vaultHosts []string, secrets *secretsConfig) error {
+func enableSecrets(vaultHosts []string, secrets *secrets.Config) error {
 	envVars := fmt.Sprintf("export VAULT_SKIP_VERIFY=true && export VAULT_ADDR=https://%s:8200 && ", vaultHosts[0])
 	err := runCmd("", fmt.Sprintf("%s vault login %s && vault secrets enable -path=secret/ kv-v2", envVars, secrets.VaultConfig.RootToken), os.Stdout)
 	if err != nil {
@@ -115,7 +118,7 @@ func enableSecrets(vaultHosts []string, secrets *secretsConfig) error {
 	return err
 }
 
-func unseal(baseDir string, vaultHosts []string, secrets *secretsConfig, init bool) error {
+func unseal(baseDir string, vaultHosts []string, secrets *secrets.Config, init bool) error {
 	for _, host := range vaultHosts {
 
 		var out bytes.Buffer
@@ -181,7 +184,7 @@ func isVaultUnsealed(bytes []byte) bool {
 	return true
 }
 
-func parseVaultInit(initFile string, secrets *secretsConfig) (*secretsConfig, error) { //nolint
+func parseVaultInit(initFile string, secretConfig *secrets.Config) (*secrets.Config, error) { //nolint
 	content, err := os.ReadFile(filepath.Clean(initFile))
 	if err != nil {
 		log.Fatal(err)
@@ -189,18 +192,18 @@ func parseVaultInit(initFile string, secrets *secretsConfig) (*secretsConfig, er
 
 	text := string(content)
 	temp := strings.Split(text, "\n")
-	secrets.VaultConfig = vaultSecrets{
+	secretConfig.VaultConfig = secrets.VaultSecrets{
 		UnsealKeys:     []string{},
 		RootToken:      "",
 		NomadRootToken: "",
 	}
 	for _, line := range temp {
 		if strings.HasPrefix(line, "Unseal Key") {
-			secrets.VaultConfig.UnsealKeys = append(secrets.VaultConfig.UnsealKeys, strings.SplitAfter(line, ": ")[1])
+			secretConfig.VaultConfig.UnsealKeys = append(secretConfig.VaultConfig.UnsealKeys, strings.SplitAfter(line, ": ")[1])
 		}
 		if strings.HasPrefix(line, "Initial Root Token: ") {
-			secrets.VaultConfig.RootToken = strings.SplitAfter(line, ": ")[1]
+			secretConfig.VaultConfig.RootToken = strings.SplitAfter(line, ": ")[1]
 		}
 	}
-	return secrets, nil
+	return secretConfig, nil
 }

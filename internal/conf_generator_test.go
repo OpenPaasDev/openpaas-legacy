@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/OpenPaas/openpaas/internal/secrets"
 	"github.com/hashicorp/hcl2/gohcl"
 	"github.com/hashicorp/hcl2/hcl"
 	"github.com/hashicorp/hcl2/hclparse"
@@ -202,7 +203,7 @@ func setUpEnvRCTest(t *testing.T, copyEnvRC bool) *Config {
 		copyTestFile(t, filepath.Join("testdata", "envrc"), filepath.Join(folder, ".envrc"))
 	}
 
-	secrets := &secretsConfig{
+	secrets := &secrets.Config{
 		ConsulGossipKey:        "consulGossipKey",
 		NomadGossipKey:         "nomadGossipKey",
 		NomadClientConsulToken: "TBD",

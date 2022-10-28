@@ -1,4 +1,4 @@
-module github.com/chaordic-io/venue-cluster
+module github.com/OpenPaas/openpaas
 
 go 1.19
 

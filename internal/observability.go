@@ -8,6 +8,9 @@ import (
 	"path/filepath"
 	"strings"
 	"text/template"
+
+	"github.com/OpenPaas/openpaas/internal/ansible"
+	"github.com/OpenPaas/openpaas/internal/hashistack"
 )
 
 //go:embed templates/consul/intention.hcl
@@ -69,7 +72,7 @@ var prometheusConsulService string
 
 type consulServiceConf struct {
 	template      string
-	getPrivateIPs func(*Inventory) []string
+	getPrivateIPs func(*ansible.Inventory) []string
 	file          string
 	name          string
 }
@@ -77,7 +80,7 @@ type consulServiceConf struct {
 func Observability(config *Config, inventory, configFile string) error {
 	baseDir := config.BaseDir
 	user := config.CloudProviderConfig.User
-	inv, err := LoadInventory(inventory)
+	inv, err := ansible.LoadInventory(inventory)
 	if err != nil {
 		return err
 	}
@@ -87,7 +90,7 @@ func Observability(config *Config, inventory, configFile string) error {
 	if err != nil {
 		return err
 	}
-	consul := NewConsul(inv, sec, baseDir)
+	consul := hashistack.NewConsul(inv, sec, baseDir)
 
 	err = mkObservabilityConfigs(consul, config, inv)
 	if err != nil {
@@ -104,7 +107,7 @@ func Observability(config *Config, inventory, configFile string) error {
 	return nil
 }
 
-func mkObservabilityConfigs(consul Consul, config *Config, inv *Inventory) error {
+func mkObservabilityConfigs(consul hashistack.Consul, config *Config, inv *ansible.Inventory) error {
 	dirs := []string{
 		"prometheus", "loki", "grafana", "intentions", "tempo", "consul",
 	}
@@ -180,7 +183,7 @@ func mkObservabilityConfigs(consul Consul, config *Config, inv *Inventory) error
 	consulServices := []consulServiceConf{
 		{
 			template: tempoGrpcService,
-			getPrivateIPs: func(inv *Inventory) []string {
+			getPrivateIPs: func(inv *ansible.Inventory) []string {
 				return inv.All.Children.Tempo.GetPrivateHosts()
 			},
 			file: filepath.Join(baseDir, "tempo", "tempo-grpc.hcl"),
@@ -188,7 +191,7 @@ func mkObservabilityConfigs(consul Consul, config *Config, inv *Inventory) error
 		},
 		{
 			template: tempoConsulService,
-			getPrivateIPs: func(inv *Inventory) []string {
+			getPrivateIPs: func(inv *ansible.Inventory) []string {
 				return inv.All.Children.Tempo.GetPrivateHosts()
 			},
 			file: filepath.Join(baseDir, "tempo", "tempo.hcl"),
@@ -196,7 +199,7 @@ func mkObservabilityConfigs(consul Consul, config *Config, inv *Inventory) error
 		},
 		{
 			template: prometheusConsulService,
-			getPrivateIPs: func(inv *Inventory) []string {
+			getPrivateIPs: func(inv *ansible.Inventory) []string {
 				return inv.All.Children.Prometheus.GetPrivateHosts()
 			},
 			file: filepath.Join(baseDir, "prometheus", "prometheus.hcl"),
@@ -204,7 +207,7 @@ func mkObservabilityConfigs(consul Consul, config *Config, inv *Inventory) error
 		},
 		{
 			template: lokiHttpService,
-			getPrivateIPs: func(inv *Inventory) []string {
+			getPrivateIPs: func(inv *ansible.Inventory) []string {
 				return inv.All.Children.Loki.GetPrivateHosts()
 			},
 			file: filepath.Join(baseDir, "loki", "loki.hcl"),
@@ -212,7 +215,7 @@ func mkObservabilityConfigs(consul Consul, config *Config, inv *Inventory) error
 		},
 		{
 			template: grafanaHttpService,
-			getPrivateIPs: func(inv *Inventory) []string {
+			getPrivateIPs: func(inv *ansible.Inventory) []string {
 				return inv.All.Children.Grafana.GetPrivateHosts()
 			},
 			file: filepath.Join(baseDir, "grafana", "grafana.hcl"),
@@ -220,7 +223,7 @@ func mkObservabilityConfigs(consul Consul, config *Config, inv *Inventory) error
 		},
 		{
 			template: consulHttpService,
-			getPrivateIPs: func(inv *Inventory) []string {
+			getPrivateIPs: func(inv *ansible.Inventory) []string {
 				return inv.All.Children.ConsulServers.GetPrivateHosts()
 			},
 			file: filepath.Join(baseDir, "consul", "consul-ingress.hcl"),

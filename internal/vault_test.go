@@ -4,11 +4,12 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/OpenPaas/openpaas/internal/secrets"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestParseInit(t *testing.T) {
-	secret, err := parseVaultInit(filepath.Join("testdata", "operator-init.txt"), &secretsConfig{})
+	secret, err := parseVaultInit(filepath.Join("testdata", "operator-init.txt"), &secrets.Config{})
 	assert.NoError(t, err)
 
 	assert.NotNil(t, secret)
