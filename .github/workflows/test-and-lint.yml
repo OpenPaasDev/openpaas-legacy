@@ -13,6 +13,9 @@ jobs:
       uses: actions/setup-go@v3
       with:
         go-version: 1.19.x
+    - name: Install CFSSL
+      run: |- 
+        go install github.com/cloudflare/cfssl/cmd/...@latest
     - name: Checkout code
       uses: actions/checkout@v3
     - name: Test
