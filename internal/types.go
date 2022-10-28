@@ -69,28 +69,6 @@ type HetznerSettings struct {
 	ResourceNames             HetznerResourceNames `yaml:"resource_names"`
 }
 
-type secretsConfig struct {
-	ConsulGossipKey        string       `yaml:"CONSUL_GOSSIP_KEY"`
-	NomadGossipKey         string       `yaml:"NOMAD_GOSSIP_KEY"`
-	NomadClientConsulToken string       `yaml:"NOMAD_CLIENT_CONSUL_TOKEN"`
-	NomadServerConsulToken string       `yaml:"NOMAD_SERVER_CONSUL_TOKEN"`
-	ConsulAgentToken       string       `yaml:"CONSUL_AGENT_TOKEN"`
-	ConsulBootstrapToken   string       `yaml:"CONSUL_BOOTSTRAP_TOKEN"`
-	PrometheusConsulToken  string       `yaml:"PROMETHEUS_CONSUL_TOKEN"`
-	FabioConsulToken       string       `yaml:"FABIO_CONSUL_TOKEN"`
-	VaultConsulToken       string       `yaml:"VAULT_CONSUL_TOKEN"`
-	S3Endpoint             string       `yaml:"s3_endpoint"`
-	S3AccessKey            string       `yaml:"s3_access_key"`
-	S3SecretKey            string       `yaml:"s3_secret_key"`
-	VaultConfig            vaultSecrets `yaml:"vault"`
-}
-
-type vaultSecrets struct {
-	RootToken      string   `yaml:"root_token"`
-	UnsealKeys     []string `yaml:"unseal_keys"`
-	NomadRootToken string   `yaml:"nomad_root_token"`
-}
-
 type TFVarsConfig struct {
 	ClusterConfig  ClusterConfig
 	ProviderConfig interface{}
@@ -102,19 +80,6 @@ func LoadConfig(file string) (*Config, error) {
 		return nil, err
 	}
 	var config Config
-	err = yaml.Unmarshal(bytes, &config)
-	if err != nil {
-		return nil, err
-	}
-	return &config, nil
-}
-
-func LoadInventory(file string) (*Inventory, error) {
-	bytes, err := os.ReadFile(filepath.Clean(file))
-	if err != nil {
-		return nil, err
-	}
-	var config Inventory
 	err = yaml.Unmarshal(bytes, &config)
 	if err != nil {
 		return nil, err

@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/OpenPaas/openpaas/internal/ansible"
+	"github.com/OpenPaas/openpaas/internal/hashistack"
 	"github.com/foomo/htpasswd"
 )
 
@@ -56,11 +58,11 @@ func Bootstrap(ctx context.Context, config *Config, configPath string) error {
 	if err != nil {
 		return err
 	}
-	inv, err := LoadInventory(inventory)
+	inv, err := ansible.LoadInventory(inventory)
 	if err != nil {
 		return err
 	}
-	err = Configure(*inv, baseDir, dcName)
+	err = Configure(inv, baseDir, dcName)
 	if err != nil {
 		return err
 	}
@@ -83,7 +85,7 @@ func Bootstrap(ctx context.Context, config *Config, configPath string) error {
 	if err != nil {
 		return err
 	}
-	consul := NewConsul(inv, sec, baseDir)
+	consul := hashistack.NewConsul(inv, sec, baseDir)
 	hasBootstrapped, err := BootstrapConsul(consul, inv, baseDir)
 	if err != nil {
 		return err
@@ -126,10 +128,19 @@ func Bootstrap(ctx context.Context, config *Config, configPath string) error {
 		return err
 	}
 
-	// 	export NOMAD_ADDR=https://5.75.158.159:4646
-	// export NOMAD_CACERT=config/secrets/nomad/nomad-ca.pem
-	// export NOMAD_CLIENT_CERT=config/secrets/nomad/client.pem
-	// export NOMAD_CLIENT_KEY=config/secrets/nomad/client-key.pem
+	nomadSecretDir := filepath.Join(baseDir, "secrets", "nomad")
+
+	nomadClient := hashistack.NewNomadClient("",
+		fmt.Sprintf("https://%s:4646", inv.All.Children.NomadServers.GetHosts()[0]),
+		filepath.Join(nomadSecretDir, "nomad-ca.pem"),
+		filepath.Join(nomadSecretDir, "client.pem"),
+		filepath.Join(nomadSecretDir, "client-key.pem"),
+	)
+
+	err = nomadClient.RunJob(filepath.Join(baseDir, "nomad", "web.hcl"))
+	if err != nil {
+		return err
+	}
 
 	return Observability(config, inventory, configPath)
 }

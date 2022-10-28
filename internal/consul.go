@@ -2,30 +2,13 @@ package internal
 
 import (
 	"fmt"
-	"log"
-	"os"
 	"path/filepath"
-	"strings"
+
+	"github.com/OpenPaas/openpaas/internal/ansible"
+	"github.com/OpenPaas/openpaas/internal/hashistack"
 )
 
-func parseConsulToken(file string) (string, error) {
-	content, err := os.ReadFile(filepath.Clean(file))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Convert []byte to string and print to screen
-	text := string(content)
-	temp := strings.Split(text, "\n")
-	for _, line := range temp {
-		if strings.HasPrefix(line, "SecretID:") {
-			return strings.ReplaceAll(strings.ReplaceAll(line, "SecretID:", ""), " ", ""), nil
-		}
-	}
-	return "", nil
-}
-
-func regenerateConsulPolicies(consul Consul, inventory *Inventory, baseDir string) error {
+func regenerateConsulPolicies(consul hashistack.Consul, inventory *ansible.Inventory, baseDir string) error {
 	err := makeConsulPolicies(inventory, baseDir)
 	if err != nil {
 		return err
@@ -36,7 +19,7 @@ func regenerateConsulPolicies(consul Consul, inventory *Inventory, baseDir strin
 	return consul.UpdatePolicy("consul-policies", policyConsul)
 }
 
-func BootstrapConsul(consul Consul, inventory *Inventory, baseDir string) (bool, error) {
+func BootstrapConsul(consul hashistack.Consul, inventory *ansible.Inventory, baseDir string) (bool, error) {
 	secrets, err := getSecrets(baseDir)
 	if err != nil {
 		return false, err

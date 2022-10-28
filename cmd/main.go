@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/chaordic-io/venue-cluster/internal"
+	"github.com/OpenPaas/openpaas/internal"
 	"github.com/spf13/cobra"
 )
 

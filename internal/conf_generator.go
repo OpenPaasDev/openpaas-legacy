@@ -11,6 +11,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/OpenPaas/openpaas/internal/ansible"
 	"gopkg.in/yaml.v3"
 )
 
@@ -75,7 +76,7 @@ func GenerateEnvFile(config *Config, targetDir string) error {
 	if err != nil {
 		return err
 	}
-	inv, err := LoadInventory(filepath.Clean(filepath.Join(config.BaseDir, "inventory")))
+	inv, err := ansible.LoadInventory(filepath.Clean(filepath.Join(config.BaseDir, "inventory")))
 	if err != nil {
 		return err
 	}
@@ -134,17 +135,17 @@ func GenerateInventory(config *Config) error {
 		return err
 	}
 
-	inv := Inventory{
-		All: All{
-			Children: Children{
-				Clients:       HostGroup{Hosts: make(map[string]AnsibleHost)},
-				NomadServers:  HostGroup{Hosts: make(map[string]AnsibleHost)},
-				ConsulServers: HostGroup{Hosts: make(map[string]AnsibleHost)},
-				VaultServers:  HostGroup{Hosts: make(map[string]AnsibleHost)},
-				Grafana:       HostGroup{Hosts: make(map[string]AnsibleHost)},
-				Prometheus:    HostGroup{Hosts: make(map[string]AnsibleHost)},
-				Loki:          HostGroup{Hosts: make(map[string]AnsibleHost)},
-				Tempo:         HostGroup{Hosts: make(map[string]AnsibleHost)},
+	inv := ansible.Inventory{
+		All: ansible.All{
+			Children: ansible.Children{
+				Clients:       ansible.HostGroup{Hosts: make(map[string]ansible.AnsibleHost)},
+				NomadServers:  ansible.HostGroup{Hosts: make(map[string]ansible.AnsibleHost)},
+				ConsulServers: ansible.HostGroup{Hosts: make(map[string]ansible.AnsibleHost)},
+				VaultServers:  ansible.HostGroup{Hosts: make(map[string]ansible.AnsibleHost)},
+				Grafana:       ansible.HostGroup{Hosts: make(map[string]ansible.AnsibleHost)},
+				Prometheus:    ansible.HostGroup{Hosts: make(map[string]ansible.AnsibleHost)},
+				Loki:          ansible.HostGroup{Hosts: make(map[string]ansible.AnsibleHost)},
+				Tempo:         ansible.HostGroup{Hosts: make(map[string]ansible.AnsibleHost)},
 			},
 		},
 	}
@@ -160,10 +161,10 @@ func GenerateInventory(config *Config) error {
 		for _, vol := range inventory.ConsulVolumes.Value {
 			if fmt.Sprintf("%v", vol.ServerID) == v.ServerID {
 				found = true
-				inv.All.Children.ConsulServers.Hosts[v.Host] = AnsibleHost{
+				inv.All.Children.ConsulServers.Hosts[v.Host] = ansible.AnsibleHost{
 					PrivateIP: v.PrivateIP,
 					HostName:  v.HostName,
-					Mounts: []Mount{
+					Mounts: []ansible.Mount{
 						{
 							Name:      "consul",
 							Path:      "/opt/consul",
@@ -180,7 +181,7 @@ func GenerateInventory(config *Config) error {
 			}
 		}
 		if !found {
-			inv.All.Children.ConsulServers.Hosts[v.Host] = AnsibleHost{
+			inv.All.Children.ConsulServers.Hosts[v.Host] = ansible.AnsibleHost{
 				PrivateIP: v.PrivateIP,
 				HostName:  v.HostName,
 			}
@@ -188,7 +189,7 @@ func GenerateInventory(config *Config) error {
 	}
 
 	for _, v := range inventory.NomadServers.Value {
-		inv.All.Children.NomadServers.Hosts[v.Host] = AnsibleHost{
+		inv.All.Children.NomadServers.Hosts[v.Host] = ansible.AnsibleHost{
 			PrivateIP: v.PrivateIP,
 			HostName:  v.HostName,
 			ExtraVars: map[string]string{
@@ -199,17 +200,17 @@ func GenerateInventory(config *Config) error {
 	}
 
 	for _, v := range inventory.VaultServers.Value {
-		inv.All.Children.VaultServers.Hosts[v.Host] = AnsibleHost{
+		inv.All.Children.VaultServers.Hosts[v.Host] = ansible.AnsibleHost{
 			PrivateIP: v.PrivateIP,
 			HostName:  v.HostName,
 		}
 	}
 
 	for _, v := range inventory.Clients.Value {
-		mounts := []Mount{}
+		mounts := []ansible.Mount{}
 		for _, vol := range inventory.ClientVolumes.Value {
 			if fmt.Sprintf("%v", vol.ServerID) == v.ServerID {
-				mounts = append(mounts, Mount{
+				mounts = append(mounts, ansible.Mount{
 					Name:      vol.Name,
 					Path:      vol.Path,
 					MountPath: vol.Mount,
@@ -218,7 +219,7 @@ func GenerateInventory(config *Config) error {
 				})
 			}
 		}
-		inv.All.Children.Clients.Hosts[v.Host] = AnsibleHost{
+		inv.All.Children.Clients.Hosts[v.Host] = ansible.AnsibleHost{
 			PrivateIP: v.PrivateIP,
 			HostName:  v.HostName,
 			Mounts:    mounts,
@@ -228,40 +229,40 @@ func GenerateInventory(config *Config) error {
 
 	if len(inventory.ObservabilityServers.Value) == 1 {
 		v := inventory.ObservabilityServers.Value[0]
-		inv.All.Children.Grafana.Hosts[v.Host] = AnsibleHost{
+		inv.All.Children.Grafana.Hosts[v.Host] = ansible.AnsibleHost{
 			PrivateIP: v.PrivateIP,
 			HostName:  v.HostName,
 		}
-		inv.All.Children.Prometheus.Hosts[v.Host] = AnsibleHost{
+		inv.All.Children.Prometheus.Hosts[v.Host] = ansible.AnsibleHost{
 			PrivateIP: v.PrivateIP,
 			HostName:  v.HostName,
 		}
-		inv.All.Children.Loki.Hosts[v.Host] = AnsibleHost{
+		inv.All.Children.Loki.Hosts[v.Host] = ansible.AnsibleHost{
 			PrivateIP: v.PrivateIP,
 			HostName:  v.HostName,
 		}
-		inv.All.Children.Tempo.Hosts[v.Host] = AnsibleHost{
+		inv.All.Children.Tempo.Hosts[v.Host] = ansible.AnsibleHost{
 			PrivateIP: v.PrivateIP,
 			HostName:  v.HostName,
 		}
 	} else {
 		v := inventory.ObservabilityServers.Value[0]
-		inv.All.Children.Grafana.Hosts[v.Host] = AnsibleHost{
+		inv.All.Children.Grafana.Hosts[v.Host] = ansible.AnsibleHost{
 			PrivateIP: v.PrivateIP,
 			HostName:  v.HostName,
 		}
 		v = inventory.ObservabilityServers.Value[1]
-		inv.All.Children.Prometheus.Hosts[v.Host] = AnsibleHost{
+		inv.All.Children.Prometheus.Hosts[v.Host] = ansible.AnsibleHost{
 			PrivateIP: v.PrivateIP,
 			HostName:  v.HostName,
 		}
 		v = inventory.ObservabilityServers.Value[2]
-		inv.All.Children.Loki.Hosts[v.Host] = AnsibleHost{
+		inv.All.Children.Loki.Hosts[v.Host] = ansible.AnsibleHost{
 			PrivateIP: v.PrivateIP,
 			HostName:  v.HostName,
 		}
 		v = inventory.ObservabilityServers.Value[3]
-		inv.All.Children.Tempo.Hosts[v.Host] = AnsibleHost{
+		inv.All.Children.Tempo.Hosts[v.Host] = ansible.AnsibleHost{
 			PrivateIP: v.PrivateIP,
 			HostName:  v.HostName,
 		}
@@ -303,98 +304,4 @@ type Volume struct {
 	Name     string `json:"name"`
 	Path     string `json:"path"`
 	ServerID int    `json:"server_id"`
-}
-
-type Inventory struct {
-	All All `yaml:"all"`
-}
-
-type All struct {
-	Children Children `yaml:"children"`
-}
-
-type Children struct {
-	Clients       HostGroup `yaml:"clients"`
-	NomadServers  HostGroup `yaml:"nomad_servers"`
-	VaultServers  HostGroup `yaml:"vault_servers"`
-	ConsulServers HostGroup `yaml:"consul_servers"`
-	Prometheus    HostGroup `yaml:"prometheus"`
-	Grafana       HostGroup `yaml:"grafana"`
-	Loki          HostGroup `yaml:"loki"`
-	Tempo         HostGroup `yaml:"tempo"`
-}
-
-type HostGroup struct {
-	Hosts map[string]AnsibleHost `yaml:"hosts"`
-}
-
-type AnsibleHost struct {
-	PrivateIP string            `yaml:"private_ip"`
-	HostName  string            `yaml:"host_name"`
-	Mounts    []Mount           `yaml:"mounts"`
-	ExtraVars map[string]string `yaml:"extra_vars"`
-}
-
-type Mount struct {
-	Name      string `yaml:"name"`
-	Path      string `yaml:"path"`
-	MountPath string `yaml:"mount_path"`
-	IsNomad   bool   `yaml:"is_nomad"`
-	Owner     string `yaml:"owner"`
-}
-
-func (group *HostGroup) GetHosts() []string {
-	res := []string{}
-	for k := range group.Hosts {
-		res = append(res, k)
-	}
-	return res
-}
-
-func (group *HostGroup) GetPrivateHosts() []string {
-	res := []string{}
-	for _, v := range group.Hosts {
-		res = append(res, v.PrivateIP)
-	}
-	return res
-}
-
-func (group *HostGroup) GetPrivateHostNames() []string {
-	res := []string{}
-	for _, v := range group.Hosts {
-		res = append(res, v.HostName)
-	}
-	return res
-}
-
-func (inv *Inventory) GetAllPrivateHosts() []string {
-	hosts := []string{}
-	rawHosts := []HostGroup{}
-	seenHosts := make(map[string]string)
-
-	rawHosts = append(rawHosts, inv.All.Children.Clients)
-	rawHosts = append(rawHosts, inv.All.Children.ConsulServers)
-	rawHosts = append(rawHosts, inv.All.Children.NomadServers)
-	rawHosts = append(rawHosts, inv.All.Children.VaultServers)
-	rawHosts = append(rawHosts, inv.All.Children.Prometheus)
-	rawHosts = append(rawHosts, inv.All.Children.Grafana)
-	rawHosts = append(rawHosts, inv.All.Children.Loki)
-	rawHosts = append(rawHosts, inv.All.Children.Tempo)
-
-	for _, hostGroup := range rawHosts {
-		for _, host := range hostGroup.GetPrivateHosts() {
-			if _, ok := seenHosts[host]; !ok {
-				hosts = append(hosts, host)
-				seenHosts[host] = host
-			}
-		}
-		for _, host := range hostGroup.GetPrivateHostNames() {
-			if _, ok := seenHosts[host]; !ok {
-				hosts = append(hosts, host)
-				seenHosts[host] = host
-			}
-		}
-	}
-
-	return hosts
 }

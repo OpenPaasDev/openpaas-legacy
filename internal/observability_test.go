@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/OpenPaas/openpaas/internal/ansible"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -18,7 +19,7 @@ func TestMkObservabilityConfigs(t *testing.T) {
 		assert.NoError(t, os.RemoveAll(filepath.Join(folder)))
 	}()
 	mkSecrets(t, folder)
-	inv, err := LoadInventory(filepath.Join("testdata", "inventory"))
+	inv, err := ansible.LoadInventory(filepath.Join("testdata", "inventory"))
 	assert.NoError(t, err)
 	consul := &MockConsul{}
 	config, err := LoadConfig(filepath.Join("testdata", "config.yaml"))

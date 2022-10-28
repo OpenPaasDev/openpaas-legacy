@@ -12,6 +12,8 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/OpenPaas/openpaas/internal/ansible"
+	"github.com/OpenPaas/openpaas/internal/secrets"
 	"gopkg.in/yaml.v3"
 )
 
@@ -97,7 +99,7 @@ var nomadAnsible string
 var vaultAnsible string
 
 // calculate bootstrap expect from files
-func Configure(inventory Inventory, baseDir, dcName string) error {
+func Configure(inventory *ansible.Inventory, baseDir, dcName string) error {
 
 	err := os.MkdirAll(filepath.Join(baseDir), 0750)
 	if err != nil {
@@ -124,7 +126,7 @@ func Configure(inventory Inventory, baseDir, dcName string) error {
 		return err
 	}
 
-	err = makeConsulPolicies(&inventory, baseDir)
+	err = makeConsulPolicies(inventory, baseDir)
 	if err != nil {
 		return err
 	}
@@ -137,12 +139,12 @@ func Configure(inventory Inventory, baseDir, dcName string) error {
 	return err
 }
 
-func getSecrets(baseDir string) (*secretsConfig, error) {
+func getSecrets(baseDir string) (*secrets.Config, error) {
 	bytes, err := os.ReadFile(filepath.Clean(filepath.Join(baseDir, "secrets", "secrets.yml")))
 	if err != nil {
 		return nil, err
 	}
-	var secrets secretsConfig
+	var secrets secrets.Config
 	err = yaml.Unmarshal(bytes, &secrets)
 	if err != nil {
 		return nil, err
@@ -150,7 +152,7 @@ func getSecrets(baseDir string) (*secretsConfig, error) {
 	return &secrets, nil
 }
 
-func writeSecrets(baseDir string, secrets *secretsConfig) error {
+func writeSecrets(baseDir string, secrets *secrets.Config) error {
 	bytes, err := yaml.Marshal(secrets)
 	if err != nil {
 		return err
@@ -163,7 +165,7 @@ func writeSecrets(baseDir string, secrets *secretsConfig) error {
 	return nil
 }
 
-func makeConsulPolicies(inventory *Inventory, baseDir string) error {
+func makeConsulPolicies(inventory *ansible.Inventory, baseDir string) error {
 
 	err := os.MkdirAll(filepath.Join(baseDir, "consul"), 0750)
 	if err != nil {
@@ -215,7 +217,7 @@ func makeConsulPolicies(inventory *Inventory, baseDir string) error {
 	return nil
 }
 
-func makeConfigs(inventory Inventory, baseDir, dcName string) error {
+func makeConfigs(inventory *ansible.Inventory, baseDir, dcName string) error {
 	hostMap := make(map[string]string)
 	hosts := ""
 	first := true
@@ -285,7 +287,7 @@ func makeConfigs(inventory Inventory, baseDir, dcName string) error {
 	return nil
 }
 
-func Secrets(inventory Inventory, baseDir, dcName string) error {
+func Secrets(inventory *ansible.Inventory, baseDir, dcName string) error {
 	var out bytes.Buffer
 	err := runCmd("", "consul keygen", &out)
 	if err != nil {
@@ -310,7 +312,7 @@ func Secrets(inventory Inventory, baseDir, dcName string) error {
 		return fmt.Errorf("s3 compatible env variables missing for storing state: please set S3_ENDPOINT, S3_SECRET_KEY & S3_ACCESS_KEY")
 	}
 
-	secrets := &secretsConfig{
+	secrets := &secrets.Config{
 		ConsulGossipKey:        consulGossipKey,
 		NomadGossipKey:         nomadGossipKey,
 		NomadClientConsulToken: "TBD",

@@ -4,18 +4,19 @@
 package internal
 
 import (
+	"github.com/OpenPaas/openpaas/internal/hashistack"
 	"sync"
 )
 
-// Ensure, that MockConsul does implement Consul.
+// Ensure, that MockConsul does implement hashistack.Consul.
 // If this is not the case, regenerate this file with moq.
-var _ Consul = &MockConsul{}
+var _ hashistack.Consul = &MockConsul{}
 
-// MockConsul is a mock implementation of Consul.
+// MockConsul is a mock implementation of hashistack.Consul.
 //
 // 	func TestSomethingThatUsesConsul(t *testing.T) {
 //
-// 		// make and configure a mocked Consul
+// 		// make and configure a mocked hashistack.Consul
 // 		mockedConsul := &MockConsul{
 // 			BootstrapFunc: func() (string, error) {
 // 				panic("mock out the Bootstrap method")
@@ -40,7 +41,7 @@ var _ Consul = &MockConsul{}
 // 			},
 // 		}
 //
-// 		// use mockedConsul in code that requires Consul
+// 		// use mockedConsul in code that requires hashistack.Consul
 // 		// and then make assertions.
 //
 // 	}
