@@ -65,6 +65,10 @@ plugin "docker" {
   config {
     # extra Docker labels to be set by Nomad on each Docker container with the appropriate value
     extra_labels = ["job_name", "task_group_name", "task_name", "namespace", "node_name"]
+    volumes {
+      enabled      = true
+      selinuxlabel = "z"
+    }
   }
 }
 
