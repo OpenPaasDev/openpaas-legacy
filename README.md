@@ -208,3 +208,4 @@ for ALLOC in `ls -d $NOMAD_DATA_ROOT/alloc/*`; do for JOB in `ls ${ALLOC}| grep 
         - [ ] Nomad health
         - [ ] Vault health
         - [ ] Host health (CPU, memory, disk)
+
