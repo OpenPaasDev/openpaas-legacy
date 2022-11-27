@@ -8,6 +8,7 @@ import (
 
 	"github.com/OpenPaas/openpaas/internal/ansible"
 	"github.com/OpenPaas/openpaas/internal/secrets"
+	sec "github.com/OpenPaas/openpaas/internal/secrets"
 	"github.com/OpenPaas/openpaas/internal/util"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v3"
@@ -44,13 +45,15 @@ func TestBootstrapConsul(t *testing.T) {
 	}
 	inv, err := ansible.LoadInventory(filepath.Join("testdata", "inventory"))
 	assert.NoError(t, err)
-	b, err := BootstrapConsul(consul, inv, folder)
+	secrets, err := sec.Load(folder)
+	assert.NoError(t, err)
+	b, err := BootstrapConsul(consul, inv, secrets, folder)
 	assert.NoError(t, err)
 	assert.True(t, b)
 	assert.Equal(t, 7, len(consul.RegisterPolicyCalls()))
 
 	assert.Equal(t, 6, len(consul.RegisterACLCalls()))
-	newSecrets, err := getSecrets(folder)
+	newSecrets, err := sec.Load(folder)
 	assert.NoError(t, err)
 
 	assert.Equal(t, newSecrets.ConsulBootstrapToken, "bootstrap-token")

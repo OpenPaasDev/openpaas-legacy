@@ -48,7 +48,7 @@ func generateTLS(config *conf.Config, inventory *ansible.Inventory) error {
 	return nil
 }
 
-func Vault(config *conf.Config, inventory *ansible.Inventory) error {
+func Vault(config *conf.Config, inventory *ansible.Inventory, sec *secrets.Config) error {
 	outputDir := filepath.Join(config.BaseDir, "secrets", "vault")
 	initFile := filepath.Join(outputDir, "init.txt")
 	vaultHosts := inventory.All.Children.VaultServers.GetHosts()
@@ -57,35 +57,33 @@ func Vault(config *conf.Config, inventory *ansible.Inventory) error {
 		filepath.Join(config.BaseDir, "vault", "nomad-server-policy.hcl"): vaultServerPolicy,
 		filepath.Join(config.BaseDir, "vault", "token-role.json"):         vaultTokenRole,
 	}
+	var err error
 	for k, v := range toCopy {
-		err := os.WriteFile(k, []byte(v), 0600)
+		err = os.WriteFile(k, []byte(v), 0600)
 		if err != nil {
 			return err
 		}
 	}
-	secrets, err := getSecrets(config.BaseDir)
-	if err != nil {
-		return err
-	}
+
 	if _, e := os.Stat(filepath.Clean(initFile)); errors.Is(e, os.ErrNotExist) {
 
-		secrets, err = initVault(config.BaseDir, initFile, vaultHosts, secrets)
+		sec, err = initVault(config.BaseDir, initFile, vaultHosts, sec)
 		if err != nil {
 			return err
 		}
 	}
-	if secrets.VaultConfig.RootToken == "" {
-		secrets, err = parseVaultInit(initFile, secrets)
+	if sec.VaultConfig.RootToken == "" {
+		sec, err = parseVaultInit(initFile, sec)
 		if err != nil {
 			return err
 		}
 	}
 
-	err = unseal(config.BaseDir, vaultHosts, secrets, false)
+	err = unseal(config.BaseDir, vaultHosts, sec, false)
 	if err != nil {
 		return err
 	}
-	return writeSecrets(config.BaseDir, secrets)
+	return secrets.Write(config.BaseDir, sec)
 }
 
 func initVault(baseDir, initFile string, vaultHosts []string, secrets *secrets.Config) (*secrets.Config, error) {

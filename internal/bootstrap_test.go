@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/OpenPaas/openpaas/internal/ansible"
+	sec "github.com/OpenPaas/openpaas/internal/secrets"
 	"github.com/OpenPaas/openpaas/internal/util"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v3"
@@ -150,7 +151,7 @@ func TestMakeSecrets(t *testing.T) {
 		assertFileExists(t, filepath.Join(nomadDir, path))
 	}
 
-	secrets, err := getSecrets(folder)
+	secrets, err := sec.Load(folder)
 	assert.NoError(t, err)
 	assert.Equal(t, "TBD", secrets.ConsulBootstrapToken)
 	assert.Equal(t, "TBD", secrets.ConsulAgentToken)

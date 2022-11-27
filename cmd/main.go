@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/OpenPaas/openpaas/internal"
 	"github.com/OpenPaas/openpaas/internal/conf"
@@ -34,7 +33,7 @@ func main() {
 		},
 	}
 
-	rootCmd.AddCommand(sync(), observability(), envRC())
+	rootCmd.AddCommand(sync(), envRC())
 
 	err = rootCmd.Execute()
 	if err != nil {
@@ -97,30 +96,6 @@ func envRC() *cobra.Command {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-
-	return cmd
-}
-
-func observability() *cobra.Command {
-	var configFile string
-	cmd := &cobra.Command{
-		Use:   "observability",
-		Short: "adds observability to a cluster",
-		Long:  `adds observability a cluster`,
-		Run: func(cmd *cobra.Command, args []string) {
-			config, err := conf.Load(configFile)
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
-			err = internal.Observability(config, filepath.Join(config.BaseDir, "inventory"), configFile)
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
-		},
-	}
-	addFlags(cmd, &configFile)
 
 	return cmd
 }

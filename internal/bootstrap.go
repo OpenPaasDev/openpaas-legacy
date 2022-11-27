@@ -139,32 +139,6 @@ func Configure(inventory *ansible.Inventory, baseDir, dcName string) error {
 	return err
 }
 
-func getSecrets(baseDir string) (*secrets.Config, error) {
-	bytes, err := os.ReadFile(filepath.Clean(filepath.Join(baseDir, "secrets", "secrets.yml")))
-	if err != nil {
-		return nil, err
-	}
-	var secrets secrets.Config
-	err = yaml.Unmarshal(bytes, &secrets)
-	if err != nil {
-		return nil, err
-	}
-	return &secrets, nil
-}
-
-func writeSecrets(baseDir string, secrets *secrets.Config) error {
-	bytes, err := yaml.Marshal(secrets)
-	if err != nil {
-		return err
-	}
-
-	err = os.WriteFile(filepath.Join(baseDir, "secrets", "secrets.yml"), bytes, 0600)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 func makeConsulPolicies(inventory *ansible.Inventory, baseDir string) error {
 
 	err := os.MkdirAll(filepath.Join(baseDir, "consul"), 0750)

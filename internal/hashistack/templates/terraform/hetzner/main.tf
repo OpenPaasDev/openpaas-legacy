@@ -81,13 +81,6 @@ resource "hcloud_firewall" "network_firewall" {
   }
 
   rule {
-    direction  = "in"
-    protocol   = "tcp"
-    port       = "443"
-    source_ips = var.https_allowed_ips
-  }
-
-  rule {
     direction = "in"
     protocol  = "icmp"
     source_ips = [

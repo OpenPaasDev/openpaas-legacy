@@ -1,0 +1,19 @@
+[Unit]
+Description=Promtail
+Documentation=https://prometheus.io/docs/introduction/overview/
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+ExecReload=/bin/kill -HUP $MAINPID
+ExecStart=/usr/local/bin/promtail \
+  --config.file=/etc/prom/promtail.yml
+
+SyslogIdentifier=promtail
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

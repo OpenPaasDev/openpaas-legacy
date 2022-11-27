@@ -10,7 +10,10 @@ import (
 	"github.com/OpenPaas/openpaas/internal/ansible"
 	"github.com/OpenPaas/openpaas/internal/conf"
 	"github.com/OpenPaas/openpaas/internal/hashistack"
+	"github.com/OpenPaas/openpaas/internal/o11y"
 	"github.com/foomo/htpasswd"
+
+	secret "github.com/OpenPaas/openpaas/internal/secrets"
 )
 
 func Bootstrap(ctx context.Context, config *conf.Config, configPath string) error {
@@ -63,6 +66,7 @@ func Bootstrap(ctx context.Context, config *conf.Config, configPath string) erro
 	if err != nil {
 		return err
 	}
+
 	setup := filepath.Join(baseDir, "base.yml")
 	secrets := filepath.Join(baseDir, "secrets", "secrets.yml")
 	fmt.Println("sleeping 10s to ensure all nodes are available..")
@@ -78,12 +82,12 @@ func Bootstrap(ctx context.Context, config *conf.Config, configPath string) erro
 		return err
 	}
 
-	sec, err := getSecrets(baseDir)
+	sec, err := secret.Load(baseDir)
 	if err != nil {
 		return err
 	}
 	consul := hashistack.NewConsul(inv, sec, baseDir)
-	hasBootstrapped, err := BootstrapConsul(consul, inv, baseDir)
+	hasBootstrapped, err := BootstrapConsul(consul, inv, sec, baseDir)
 	if err != nil {
 		return err
 	}
@@ -98,7 +102,7 @@ func Bootstrap(ctx context.Context, config *conf.Config, configPath string) erro
 	if err != nil {
 		return err
 	}
-	sec, err = getSecrets(baseDir)
+	sec, err = secret.Load(baseDir)
 	if err != nil {
 		return err
 	}
@@ -114,7 +118,7 @@ func Bootstrap(ctx context.Context, config *conf.Config, configPath string) erro
 	if err != nil {
 		return err
 	}
-	err = Vault(config, inv)
+	err = Vault(config, inv, sec)
 	if err != nil {
 		return err
 	}
@@ -139,5 +143,5 @@ func Bootstrap(ctx context.Context, config *conf.Config, configPath string) erro
 		return err
 	}
 
-	return Observability(config, inventory, configPath)
+	return o11y.Init(config, inventory, configPath, sec)
 }

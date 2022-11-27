@@ -9,10 +9,11 @@ import (
 
 	"github.com/OpenPaas/openpaas/internal/ansible"
 	"github.com/OpenPaas/openpaas/internal/conf"
+	sec "github.com/OpenPaas/openpaas/internal/secrets"
 )
 
 func GenerateEnvFile(config *conf.Config, targetDir string) error {
-	secrets, err := getSecrets(config.BaseDir)
+	secrets, err := sec.Load(config.BaseDir)
 	if err != nil {
 		return err
 	}

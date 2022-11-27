@@ -9,6 +9,7 @@ import (
 
 	"github.com/OpenPaas/openpaas/internal/conf"
 	"github.com/OpenPaas/openpaas/internal/secrets"
+	sec "github.com/OpenPaas/openpaas/internal/secrets"
 	"github.com/OpenPaas/openpaas/internal/util"
 	"github.com/stretchr/testify/assert"
 )
@@ -137,7 +138,7 @@ func setUpEnvRCTest(t *testing.T, copyEnvRC bool) *conf.Config {
 		S3AccessKey:            "S3_ACCESS_KEY",
 	}
 
-	err = writeSecrets(folder, secrets)
+	err = sec.Write(folder, secrets)
 	assert.NoError(t, err)
 	return config
 }
