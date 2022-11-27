@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 
 	"github.com/OpenPaas/openpaas/internal"
+	"github.com/OpenPaas/openpaas/internal/conf"
+	"github.com/OpenPaas/openpaas/internal/util"
 	"github.com/spf13/cobra"
 )
 
@@ -16,7 +18,7 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	if !internal.HasDependencies() {
+	if !util.HasDependencies() {
 		os.Exit(1)
 	}
 
@@ -48,7 +50,7 @@ func sync() *cobra.Command {
 		Short: "bootstraps and starts a cluster or syncs the cluster to its desired state",
 		Long:  `bootstraps and starts a cluster or syncs the cluster to its desired state`,
 		Run: func(cmd *cobra.Command, args []string) {
-			config, err := internal.LoadConfig(configFile)
+			config, err := conf.Load(configFile)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -74,7 +76,7 @@ func envRC() *cobra.Command {
 		Short: "Generate env file to source for your environment",
 		Long:  `Generate env file to source for your environment`,
 		Run: func(cmd *cobra.Command, args []string) {
-			config, err := internal.LoadConfig(configFile)
+			config, err := conf.Load(configFile)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -106,7 +108,7 @@ func observability() *cobra.Command {
 		Short: "adds observability to a cluster",
 		Long:  `adds observability a cluster`,
 		Run: func(cmd *cobra.Command, args []string) {
-			config, err := internal.LoadConfig(configFile)
+			config, err := conf.Load(configFile)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)

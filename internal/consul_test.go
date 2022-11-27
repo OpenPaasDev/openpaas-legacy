@@ -8,6 +8,7 @@ import (
 
 	"github.com/OpenPaas/openpaas/internal/ansible"
 	"github.com/OpenPaas/openpaas/internal/secrets"
+	"github.com/OpenPaas/openpaas/internal/util"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v3"
 )
@@ -22,7 +23,7 @@ import (
 // }
 
 func TestBootstrapConsul(t *testing.T) {
-	folder := RandString(8)
+	folder := util.RandString(8)
 	assert.NoError(t, os.MkdirAll(filepath.Clean(filepath.Join(folder, "secrets")), 0750))
 
 	assert.NoError(t, os.MkdirAll(filepath.Clean(filepath.Join(folder, "consul")), 0750))

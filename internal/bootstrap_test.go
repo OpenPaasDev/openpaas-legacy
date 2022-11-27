@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/OpenPaas/openpaas/internal/ansible"
+	"github.com/OpenPaas/openpaas/internal/util"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v3"
 )
@@ -30,7 +31,7 @@ func init() {
 }
 
 func TestMakeConsulPoliciesAndHashiConfigs(t *testing.T) {
-	folder := RandString(8)
+	folder := util.RandString(8)
 	defer func() {
 		assert.NoError(t, os.RemoveAll(filepath.Clean((filepath.Join(folder)))))
 	}()
@@ -85,7 +86,7 @@ func TestMakeConsulPoliciesAndHashiConfigs(t *testing.T) {
 }
 
 func TestMakeSecrets(t *testing.T) {
-	folder := RandString(8)
+	folder := util.RandString(8)
 	defer func() {
 		err := os.RemoveAll(folder)
 		assert.NoError(t, err)

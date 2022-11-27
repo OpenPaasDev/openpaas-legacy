@@ -7,11 +7,13 @@ import (
 	"testing"
 
 	"github.com/OpenPaas/openpaas/internal/ansible"
+	"github.com/OpenPaas/openpaas/internal/conf"
+	"github.com/OpenPaas/openpaas/internal/util"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestMkObservabilityConfigs(t *testing.T) {
-	folder := RandString(8)
+	folder := util.RandString(8)
 	assert.NoError(t, os.MkdirAll(filepath.Join(folder, "secrets"), 0750))
 
 	assert.NoError(t, os.MkdirAll(filepath.Join(folder, "consul"), 0750))
@@ -22,7 +24,7 @@ func TestMkObservabilityConfigs(t *testing.T) {
 	inv, err := ansible.LoadInventory(filepath.Join("testdata", "inventory"))
 	assert.NoError(t, err)
 	consul := &MockConsul{}
-	config, err := LoadConfig(filepath.Join("testdata", "config.yaml"))
+	config, err := conf.Load(filepath.Join("testdata", "config.yaml"))
 	config.BaseDir = folder
 	assert.NoError(t, err)
 	assert.NoError(t, mkObservabilityConfigs(consul, config, inv))

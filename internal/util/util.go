@@ -1,4 +1,4 @@
-package internal
+package util
 
 import (
 	"bytes"
@@ -8,6 +8,8 @@ import (
 	"runtime"
 	"strings"
 	"time"
+
+	rt "github.com/OpenPaas/openpaas/internal/runtime"
 )
 
 func init() {
@@ -41,7 +43,7 @@ func HasDependencies() bool {
 
 	var b bytes.Buffer
 	if runtime.GOOS == "darwin" {
-		err := runCmd("", "which openssl", &b)
+		err := rt.Exec(&rt.EmptyEnv{}, "which openssl", &b)
 		if err != nil {
 			fmt.Println("openssl not present")
 			fmt.Println(err)

@@ -1,4 +1,4 @@
-package internal
+package conf
 
 import (
 	"fmt"
@@ -74,7 +74,7 @@ type TFVarsConfig struct {
 	ProviderConfig interface{}
 }
 
-func LoadConfig(file string) (*Config, error) {
+func Load(file string) (*Config, error) {
 	bytes, err := os.ReadFile(filepath.Clean(file))
 	if err != nil {
 		return nil, err

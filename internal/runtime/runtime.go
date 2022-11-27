@@ -12,6 +12,16 @@ type Environment interface {
 	WorkingDir() string
 }
 
+type EmptyEnv struct{}
+
+func (e *EmptyEnv) Get() map[string]string {
+	return make(map[string]string)
+}
+
+func (e *EmptyEnv) WorkingDir() string {
+	return ""
+}
+
 func Exec(env Environment, command string, stdOut io.Writer) error {
 
 	vars := env.Get()

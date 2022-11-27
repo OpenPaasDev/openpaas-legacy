@@ -8,32 +8,29 @@ import (
 	"time"
 
 	"github.com/OpenPaas/openpaas/internal/ansible"
+	"github.com/OpenPaas/openpaas/internal/conf"
 	"github.com/OpenPaas/openpaas/internal/hashistack"
 	"github.com/foomo/htpasswd"
 )
 
-func Bootstrap(ctx context.Context, config *Config, configPath string) error {
+func Bootstrap(ctx context.Context, config *conf.Config, configPath string) error {
 	inventory := filepath.Join(config.BaseDir, "inventory")
 	dcName := config.DC
 	user := config.CloudProviderConfig.User
 	baseDir := config.BaseDir
 
-	ips, err := GetCloudflareIPs(ctx)
-	if err != nil {
-		return err
-	}
-	err = GenerateTerraform(config, ips)
+	err := hashistack.GenerateTerraform(config)
 	if err != nil {
 		return err
 	}
 
-	tf, err := InitTf(ctx, filepath.Join(config.BaseDir, "terraform"), os.Stdout, os.Stderr)
+	tf, err := hashistack.InitTf(ctx, filepath.Join(config.BaseDir, "terraform"), os.Stdout, os.Stderr)
 	if err != nil {
 		return err
 	}
 	os.Remove(filepath.Join(config.BaseDir, "inventory-output.json")) //nolint
 
-	err = tf.Apply(ctx, LoadTFExecVars(config))
+	err = tf.Apply(ctx, conf.LoadTFExecVars(config))
 	if err != nil {
 		panic(err)
 	}
@@ -45,7 +42,7 @@ func Bootstrap(ctx context.Context, config *Config, configPath string) error {
 		e := f.Close()
 		fmt.Println(e)
 	}()
-	tf, err = InitTf(ctx, filepath.Join(config.BaseDir, "terraform"), f, os.Stderr)
+	tf, err = hashistack.InitTf(ctx, filepath.Join(config.BaseDir, "terraform"), f, os.Stderr)
 	if err != nil {
 		return err
 	}
@@ -54,7 +51,7 @@ func Bootstrap(ctx context.Context, config *Config, configPath string) error {
 		return err
 	}
 
-	err = GenerateInventory(config)
+	err = ansible.GenerateInventory(config)
 	if err != nil {
 		return err
 	}

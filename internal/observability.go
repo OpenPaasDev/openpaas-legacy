@@ -10,6 +10,7 @@ import (
 	"text/template"
 
 	"github.com/OpenPaas/openpaas/internal/ansible"
+	"github.com/OpenPaas/openpaas/internal/conf"
 	"github.com/OpenPaas/openpaas/internal/hashistack"
 )
 
@@ -77,7 +78,7 @@ type consulServiceConf struct {
 	name          string
 }
 
-func Observability(config *Config, inventory, configFile string) error {
+func Observability(config *conf.Config, inventory, configFile string) error {
 	baseDir := config.BaseDir
 	user := config.CloudProviderConfig.User
 	inv, err := ansible.LoadInventory(inventory)
@@ -107,7 +108,7 @@ func Observability(config *Config, inventory, configFile string) error {
 	return nil
 }
 
-func mkObservabilityConfigs(consul hashistack.Consul, config *Config, inv *ansible.Inventory) error {
+func mkObservabilityConfigs(consul hashistack.Consul, config *conf.Config, inv *ansible.Inventory) error {
 	dirs := []string{
 		"prometheus", "loki", "grafana", "intentions", "tempo", "consul",
 	}

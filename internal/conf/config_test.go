@@ -1,4 +1,4 @@
-package internal
+package conf
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 )
 
 func TestLoadConfig(t *testing.T) {
-	conf, err := LoadConfig(filepath.Join("testdata", "config.yaml"))
+	conf, err := Load(filepath.Join("..", "testdata", "config.yaml"))
 	assert.NoError(t, err)
 	assert.NotNil(t, conf)
 	fmt.Println(conf)
@@ -30,7 +30,7 @@ func TestLoadConfig(t *testing.T) {
 }
 
 func TestLoadProviderConfig(t *testing.T) {
-	conf, err := LoadConfig(filepath.Join("testdata", "config.yaml"))
+	conf, err := Load(filepath.Join("..", "testdata", "config.yaml"))
 	assert.NoError(t, err)
 	assert.NotNil(t, conf)
 

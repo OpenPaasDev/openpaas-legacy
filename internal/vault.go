@@ -12,6 +12,7 @@ import (
 	_ "embed"
 
 	"github.com/OpenPaas/openpaas/internal/ansible"
+	"github.com/OpenPaas/openpaas/internal/conf"
 	"github.com/OpenPaas/openpaas/internal/secrets"
 )
 
@@ -21,7 +22,7 @@ var vaultServerPolicy string
 //go:embed templates/vault/token-role.json
 var vaultTokenRole string
 
-func generateTLS(config *Config, inventory *ansible.Inventory) error {
+func generateTLS(config *conf.Config, inventory *ansible.Inventory) error {
 	outputDir := filepath.Join(config.BaseDir, "secrets", "vault")
 	if _, err := os.Stat(filepath.Join(outputDir, "tls.key")); errors.Is(err, os.ErrNotExist) {
 		err := os.MkdirAll(outputDir, 0700)
@@ -47,7 +48,7 @@ func generateTLS(config *Config, inventory *ansible.Inventory) error {
 	return nil
 }
 
-func Vault(config *Config, inventory *ansible.Inventory) error {
+func Vault(config *conf.Config, inventory *ansible.Inventory) error {
 	outputDir := filepath.Join(config.BaseDir, "secrets", "vault")
 	initFile := filepath.Join(outputDir, "init.txt")
 	vaultHosts := inventory.All.Children.VaultServers.GetHosts()
