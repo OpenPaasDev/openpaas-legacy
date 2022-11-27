@@ -176,7 +176,10 @@ resource "hcloud_load_balancer" "lb1" {
   # network_zone       =  hcloud_network_subnet.network_subnet["consul"].network_zone
   location           = var.location
   depends_on = [
-    hcloud_server_network.network_binding
+    hcloud_server.server_node,
+    hcloud_server_network.network_binding,
+    hcloud_network_subnet.network_subnet["client"],
+    hcloud_network_subnet.network_subnet["consul"],
   ]
 }
 
@@ -198,15 +201,26 @@ resource "hcloud_load_balancer_service" "load_balancer_service" {
     }
 }
 
+
+# this is unfortunately necessary, because no amount of `depends_on` on the load_balancer_target will ensure
+# the nodes and networks are ready for load_balancer target attachment, other than waiting
+resource "time_sleep" "wait" {
+  create_duration = "30s"
+  depends_on = [
+    hcloud_server.server_node,
+    hcloud_server_network.network_binding,
+    hcloud_network_subnet.network_subnet["client"],
+  ]
+}
+
+
 resource "hcloud_load_balancer_target" "load_balancer_target" {
   for_each = {for key, val in local.servers: val.index => val.name if val.group_name == "client"}
   type             = "server"
   load_balancer_id = hcloud_load_balancer.lb1.id
   server_id        = hcloud_server.server_node[each.value].id
   use_private_ip = true
-  depends_on = [
-    hcloud_server.server_node 
-  ]
+  depends_on = [time_sleep.wait]
 }
 
 

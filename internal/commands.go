@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/OpenPaas/openpaas/internal/ansible"
 	"github.com/OpenPaas/openpaas/internal/conf"
@@ -70,8 +69,6 @@ func Bootstrap(ctx context.Context, config *conf.Config, configPath string) erro
 
 	setup := filepath.Join(baseDir, "base.yml")
 	secrets := filepath.Join(baseDir, "secrets", "secrets.yml")
-	fmt.Println("sleeping 10s to ensure all nodes are available..")
-	time.Sleep(10 * time.Second)
 
 	ansibleClient := ansible.NewClient(inventory, secrets, user, configPath)
 
