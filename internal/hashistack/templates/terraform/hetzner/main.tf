@@ -175,12 +175,18 @@ resource "hcloud_load_balancer" "lb1" {
   load_balancer_type = var.load_balancer_type
   # network_zone       =  hcloud_network_subnet.network_subnet["consul"].network_zone
   location           = var.location
+  depends_on = [
+    hcloud_server_network.network_binding
+  ]
 }
 
 resource "hcloud_load_balancer_network" "srvnetwork" {
   load_balancer_id = hcloud_load_balancer.lb1.id
   network_id       = hcloud_network.private_network.id
   ip               = "10.0.0.7" # max 5 consul servers, so 10.0.0.7 is free
+  depends_on = [
+    hcloud_network.private_network
+  ]
 }
 
 resource "hcloud_load_balancer_service" "load_balancer_service" {

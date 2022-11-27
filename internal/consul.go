@@ -27,7 +27,7 @@ func BootstrapConsul(consul hashistack.Consul, inventory *ansible.Inventory, sec
 		return false, err
 	}
 	token, err := consul.Bootstrap()
-	if sec.ConsulBootstrapToken != "TBD" {
+	if err != nil {
 		return false, err
 	}
 

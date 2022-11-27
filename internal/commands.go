@@ -86,6 +86,9 @@ func Bootstrap(ctx context.Context, config *conf.Config, configPath string) erro
 	if err != nil {
 		return err
 	}
+
+	fmt.Println(sec)
+
 	consul := hashistack.NewConsul(inv, sec, baseDir)
 	hasBootstrapped, err := BootstrapConsul(consul, inv, sec, baseDir)
 	if err != nil {
@@ -98,14 +101,12 @@ func Bootstrap(ctx context.Context, config *conf.Config, configPath string) erro
 			return err
 		}
 	}
+
 	err = generateTLS(config, inv)
 	if err != nil {
 		return err
 	}
-	sec, err = secret.Load(baseDir)
-	if err != nil {
-		return err
-	}
+
 	file := filepath.Join(config.BaseDir, "secrets", "consul.htpasswd")
 	name := "consul"
 	password := sec.ConsulBootstrapToken

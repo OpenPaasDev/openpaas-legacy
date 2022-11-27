@@ -95,7 +95,7 @@ func Init(config *conf.Config, inventory, configFile string, sec *secrets.Config
 		return err
 	}
 
-	secretsFile := filepath.Join(baseDir, "secrets", "secrets.yaml")
+	secretsFile := filepath.Join(baseDir, "secrets", "secrets.yml")
 
 	setup := filepath.Join(baseDir, "observability.yml")
 
