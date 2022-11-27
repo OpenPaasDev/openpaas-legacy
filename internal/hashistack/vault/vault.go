@@ -1,4 +1,4 @@
-package internal
+package vault
 
 import (
 	"bytes"
@@ -13,6 +13,7 @@ import (
 
 	"github.com/OpenPaas/openpaas/internal/ansible"
 	"github.com/OpenPaas/openpaas/internal/conf"
+	"github.com/OpenPaas/openpaas/internal/runtime"
 	"github.com/OpenPaas/openpaas/internal/secrets"
 )
 
@@ -22,7 +23,7 @@ var vaultServerPolicy string
 //go:embed templates/vault/token-role.json
 var vaultTokenRole string
 
-func generateTLS(config *conf.Config, inventory *ansible.Inventory) error {
+func GenerateTLS(config *conf.Config, inventory *ansible.Inventory) error {
 	outputDir := filepath.Join(config.BaseDir, "secrets", "vault")
 	if _, err := os.Stat(filepath.Join(outputDir, "tls.key")); errors.Is(err, os.ErrNotExist) {
 		err := os.MkdirAll(outputDir, 0700)
@@ -43,12 +44,12 @@ func generateTLS(config *conf.Config, inventory *ansible.Inventory) error {
 		cmd := fmt.Sprintf(`openssl req -out %s -new -keyout %s -newkey rsa:4096 -nodes -sha256 -x509 -subj "/O=%s/CN=Vault" -addext "subjectAltName = IP:0.0.0.0,DNS:vault.service.consul,DNS:active.vault.service.consul,%s"`, crtFile, keyFile, config.OrgName, dns)
 		fmt.Println(dns)
 		fmt.Println(cmd)
-		return runCmd("", cmd, os.Stdout)
+		return runtime.Exec(&runtime.EmptyEnv{}, cmd, os.Stdout)
 	}
 	return nil
 }
 
-func Vault(config *conf.Config, inventory *ansible.Inventory, sec *secrets.Config) error {
+func Init(config *conf.Config, inventory *ansible.Inventory, sec *secrets.Config) error {
 	outputDir := filepath.Join(config.BaseDir, "secrets", "vault")
 	initFile := filepath.Join(outputDir, "init.txt")
 	vaultHosts := inventory.All.Children.VaultServers.GetHosts()
@@ -88,7 +89,7 @@ func Vault(config *conf.Config, inventory *ansible.Inventory, sec *secrets.Confi
 
 func initVault(baseDir, initFile string, vaultHosts []string, secrets *secrets.Config) (*secrets.Config, error) {
 	envVars := fmt.Sprintf("export VAULT_SKIP_VERIFY=true && export VAULT_ADDR=https://%s:8200 && ", vaultHosts[0])
-	err := runCmd("", fmt.Sprintf("%s vault operator init > %s", envVars, initFile), os.Stdout)
+	err := runtime.Exec(&runtime.EmptyEnv{}, fmt.Sprintf("%s vault operator init > %s", envVars, initFile), os.Stdout)
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +111,7 @@ func initVault(baseDir, initFile string, vaultHosts []string, secrets *secrets.C
 
 func enableSecrets(vaultHosts []string, secrets *secrets.Config) error {
 	envVars := fmt.Sprintf("export VAULT_SKIP_VERIFY=true && export VAULT_ADDR=https://%s:8200 && ", vaultHosts[0])
-	err := runCmd("", fmt.Sprintf("%s vault login %s && vault secrets enable -path=secret/ kv-v2", envVars, secrets.VaultConfig.RootToken), os.Stdout)
+	err := runtime.Exec(&runtime.EmptyEnv{}, fmt.Sprintf("%s vault login %s && vault secrets enable -path=secret/ kv-v2", envVars, secrets.VaultConfig.RootToken), os.Stdout)
 	if err != nil {
 		fmt.Println("Error enabling secrets: " + fmt.Sprintf(" %v", err))
 	}
@@ -122,14 +123,14 @@ func unseal(baseDir string, vaultHosts []string, secrets *secrets.Config, init b
 
 		var out bytes.Buffer
 		envVars := fmt.Sprintf("export VAULT_SKIP_VERIFY=true && export VAULT_ADDR=https://%s:8200 && ", host)
-		err := runCmd("", fmt.Sprintf("%s vault status", envVars), &out)
+		err := runtime.Exec(&runtime.EmptyEnv{}, fmt.Sprintf("%s vault status", envVars), &out)
 		if err != nil {
 			fmt.Println("vault not unsealed")
 		}
 		if !isVaultUnsealed(out.Bytes()) {
 			for _, key := range secrets.VaultConfig.UnsealKeys {
 				envVars := fmt.Sprintf("export VAULT_SKIP_VERIFY=true && export VAULT_ADDR=https://%s:8200 && ", host)
-				err = runCmd("", fmt.Sprintf("%s vault operator unseal %s", envVars, key), os.Stdout)
+				err = runtime.Exec(&runtime.EmptyEnv{}, fmt.Sprintf("%s vault operator unseal %s", envVars, key), os.Stdout)
 				if err != nil {
 					return err
 				}
@@ -139,12 +140,12 @@ func unseal(baseDir string, vaultHosts []string, secrets *secrets.Config, init b
 
 	if !init {
 		envVars := fmt.Sprintf("export VAULT_SKIP_VERIFY=true && export VAULT_ADDR=https://%s:8200 && ", vaultHosts[0])
-		err := runCmd("", fmt.Sprintf("%s vault policy write nomad-server %s/vault/nomad-server-policy.hcl", envVars, baseDir), os.Stdout)
+		err := runtime.Exec(&runtime.EmptyEnv{}, fmt.Sprintf("%s vault policy write nomad-server %s/vault/nomad-server-policy.hcl", envVars, baseDir), os.Stdout)
 		if err != nil {
 			return err
 		}
 		fmt.Println("gen token")
-		err = runCmd("", fmt.Sprintf("%s vault login %s && vault token create -policy nomad-server -period 72h -orphan > %s/secrets/vault/nomad-token.txt", envVars, secrets.VaultConfig.RootToken, baseDir), os.Stdout)
+		err = runtime.Exec(&runtime.EmptyEnv{}, fmt.Sprintf("%s vault login %s && vault token create -policy nomad-server -period 72h -orphan > %s/secrets/vault/nomad-token.txt", envVars, secrets.VaultConfig.RootToken, baseDir), os.Stdout)
 		if err != nil {
 			return err
 		}
@@ -155,7 +156,7 @@ func unseal(baseDir string, vaultHosts []string, secrets *secrets.Config, init b
 		secrets.VaultConfig.NomadRootToken = getVaultToken(bytes)
 
 		fmt.Println("gen token-role")
-		return runCmd("", fmt.Sprintf("%s vault login %s && vault write /auth/token/roles/nomad-cluster @%s/vault/token-role.json", envVars, secrets.VaultConfig.RootToken, baseDir), os.Stdout)
+		return runtime.Exec(&runtime.EmptyEnv{}, fmt.Sprintf("%s vault login %s && vault write /auth/token/roles/nomad-cluster @%s/vault/token-role.json", envVars, secrets.VaultConfig.RootToken, baseDir), os.Stdout)
 	}
 	return nil
 

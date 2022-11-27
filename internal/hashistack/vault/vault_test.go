@@ -1,4 +1,4 @@
-package internal
+package vault
 
 import (
 	"path/filepath"

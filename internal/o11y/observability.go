@@ -12,7 +12,6 @@ import (
 	"github.com/OpenPaas/openpaas/internal/ansible"
 	"github.com/OpenPaas/openpaas/internal/conf"
 	"github.com/OpenPaas/openpaas/internal/hashistack"
-	"github.com/OpenPaas/openpaas/internal/runtime"
 	"github.com/OpenPaas/openpaas/internal/secrets"
 )
 
@@ -80,26 +79,21 @@ type consulServiceConf struct {
 	name          string
 }
 
-func Init(config *conf.Config, inventory, configFile string, sec *secrets.Config) error {
+func Init(config *conf.Config, inventory, configFile string, sec *secrets.Config, consulClient hashistack.Consul, ansibleClient ansible.Client) error {
 	baseDir := config.BaseDir
-	user := config.CloudProviderConfig.User
 	inv, err := ansible.LoadInventory(inventory)
 	if err != nil {
 		return err
 	}
 
-	consul := hashistack.NewConsul(inv, sec, baseDir)
-
-	err = mkObservabilityConfigs(consul, config, inv)
+	err = mkObservabilityConfigs(consulClient, config, inv)
 	if err != nil {
 		return err
 	}
 
-	secretsFile := filepath.Join(baseDir, "secrets", "secrets.yml")
-
 	setup := filepath.Join(baseDir, "observability.yml")
 
-	err = runtime.Exec(&runtime.EmptyEnv{}, fmt.Sprintf("ansible-playbook %s -i %s -u %s -e @%s -e @%s", setup, inventory, user, secretsFile, configFile), os.Stdout)
+	err = ansibleClient.Run(setup)
 	if err != nil {
 		return err
 	}

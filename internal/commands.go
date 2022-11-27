@@ -10,6 +10,7 @@ import (
 	"github.com/OpenPaas/openpaas/internal/ansible"
 	"github.com/OpenPaas/openpaas/internal/conf"
 	"github.com/OpenPaas/openpaas/internal/hashistack"
+	"github.com/OpenPaas/openpaas/internal/hashistack/vault"
 	"github.com/OpenPaas/openpaas/internal/o11y"
 	"github.com/foomo/htpasswd"
 
@@ -72,12 +73,14 @@ func Bootstrap(ctx context.Context, config *conf.Config, configPath string) erro
 	fmt.Println("sleeping 10s to ensure all nodes are available..")
 	time.Sleep(10 * time.Second)
 
-	err = runCmd("", fmt.Sprintf("ansible-playbook %s -i %s -u %s -e @%s -e @%s", setup, inventory, user, secrets, configPath), os.Stdout)
+	ansibleClient := ansible.NewClient(inventory, secrets, user, configPath)
+
+	err = ansibleClient.Run(setup)
 	if err != nil {
 		return err
 	}
 	consulSetup := filepath.Join(baseDir, "consul.yml")
-	err = runCmd("", fmt.Sprintf("ansible-playbook %s -i %s -u %s -e @%s -e @%s", consulSetup, inventory, user, secrets, configPath), os.Stdout)
+	err = ansibleClient.Run(consulSetup)
 	if err != nil {
 		return err
 	}
@@ -87,8 +90,6 @@ func Bootstrap(ctx context.Context, config *conf.Config, configPath string) erro
 		return err
 	}
 
-	fmt.Println(sec)
-
 	consul := hashistack.NewConsul(inv, sec, baseDir)
 	hasBootstrapped, err := BootstrapConsul(consul, inv, sec, baseDir)
 	if err != nil {
@@ -96,13 +97,13 @@ func Bootstrap(ctx context.Context, config *conf.Config, configPath string) erro
 	}
 	if hasBootstrapped {
 		fmt.Println("Bootstrapped Consul ACL, re-running Ansible...")
-		err = runCmd("", fmt.Sprintf("ansible-playbook %s -i %s -u %s -e @%s -e @%s", consulSetup, inventory, user, secrets, configPath), os.Stdout)
+		err = ansibleClient.Run(consulSetup)
 		if err != nil {
 			return err
 		}
 	}
 
-	err = generateTLS(config, inv)
+	err = vault.GenerateTLS(config, inv)
 	if err != nil {
 		return err
 	}
@@ -115,17 +116,17 @@ func Bootstrap(ctx context.Context, config *conf.Config, configPath string) erro
 		return err
 	}
 	vaultSetup := filepath.Join(baseDir, "vault.yml")
-	err = runCmd("", fmt.Sprintf("ansible-playbook %s -i %s -u %s -e @%s -e @%s", vaultSetup, inventory, user, secrets, configPath), os.Stdout)
+	err = ansibleClient.Run(vaultSetup)
 	if err != nil {
 		return err
 	}
-	err = Vault(config, inv, sec)
+	err = vault.Init(config, inv, sec)
 	if err != nil {
 		return err
 	}
 
 	nomadSetup := filepath.Join(baseDir, "nomad.yml")
-	err = runCmd("", fmt.Sprintf("ansible-playbook %s -i %s -u %s -e @%s -e @%s", nomadSetup, inventory, user, secrets, configPath), os.Stdout)
+	err = ansibleClient.Run(nomadSetup)
 	if err != nil {
 		return err
 	}
@@ -144,5 +145,5 @@ func Bootstrap(ctx context.Context, config *conf.Config, configPath string) erro
 		return err
 	}
 
-	return o11y.Init(config, inventory, configPath, sec)
+	return o11y.Init(config, inventory, configPath, sec, consul, ansibleClient)
 }
