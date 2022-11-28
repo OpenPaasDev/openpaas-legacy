@@ -75,7 +75,7 @@ variable "network_name" {
 
 variable "allow_ips" {
   type = list
-  default = [{{ range $key, $value := .CloudProviderConfig.ProviderSettings.allowed_ips}}
+  default = [{{ range $key, $value := .CloudProviderConfig.AllowedIPs}}
    "{{ $value }}",{{ end }}
   ]
 }

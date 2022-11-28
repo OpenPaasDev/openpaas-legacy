@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/OpenPaas/openpaas/internal/ansible"
-	"github.com/OpenPaas/openpaas/internal/conf"
-	sec "github.com/OpenPaas/openpaas/internal/secrets"
+	"github.com/OpenPaaSDev/openpaas/internal/ansible"
+	"github.com/OpenPaaSDev/openpaas/internal/conf"
+	sec "github.com/OpenPaaSDev/openpaas/internal/secrets"
 )
 
 func GenerateEnvFile(config *conf.Config, targetDir string) error {

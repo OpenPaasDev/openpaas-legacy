@@ -47,3 +47,4 @@ bazel-*
 coverage.out
 .vscode
 certs/
+profile.cov

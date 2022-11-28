@@ -45,6 +45,7 @@ type CloudProvider struct {
 	NetworkInterface string                 `yaml:"internal_network_interface_name"`
 	Provider         string                 `yaml:"provider"`
 	ProviderSettings map[string]interface{} `yaml:"provider_settings"`
+	AllowedIPs       []string               `yaml:"allowed_ips"`
 }
 
 type ObservabilityConfig struct {
@@ -62,7 +63,6 @@ type HetznerResourceNames struct {
 type HetznerSettings struct {
 	Location                  string               `yaml:"location"`
 	SSHKeys                   []string             `yaml:"ssh_keys"`
-	AllowedIPs                []string             `yaml:"allowed_ips"`
 	ServerInstanceType        string               `yaml:"server_instance_type"`
 	ClientInstanceType        string               `yaml:"client_instance_type"`
 	ObservabilityInstanceType string               `yaml:"observability_instance_type"`

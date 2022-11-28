@@ -8,7 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/OpenPaas/openpaas/internal/conf"
+	"github.com/OpenPaaSDev/openpaas/internal/conf"
 )
 
 //go:embed templates/terraform/hetzner/main.tf

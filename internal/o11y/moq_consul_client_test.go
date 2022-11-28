@@ -4,7 +4,7 @@
 package o11y
 
 import (
-	"github.com/OpenPaas/openpaas/internal/hashistack"
+	"github.com/OpenPaaSDev/openpaas/internal/hashistack"
 	"sync"
 )
 

@@ -30,7 +30,7 @@ type VaultSecrets struct {
 }
 
 func Load(baseDir string) (*Config, error) {
-	bytes, err := os.ReadFile(filepath.Clean(filepath.Join(baseDir, "secrets", "secrets.yml")))
+	bytes, err := os.ReadFile(filepath.Clean(File(baseDir)))
 	if err != nil {
 		return nil, err
 	}
@@ -42,15 +42,19 @@ func Load(baseDir string) (*Config, error) {
 	return &secrets, nil
 }
 
-func Write(baseDir string, secrets *Config) error {
-	bytes, err := yaml.Marshal(secrets)
+func (sec *Config) Write(baseDir string) error {
+	bytes, err := yaml.Marshal(sec)
 	if err != nil {
 		return err
 	}
 
-	err = os.WriteFile(filepath.Join(baseDir, "secrets", "secrets.yml"), bytes, 0600)
+	err = os.WriteFile(filepath.Clean(File(baseDir)), bytes, 0600)
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+func File(baseDir string) string {
+	return filepath.Join(baseDir, "secrets", "secrets.yml")
 }

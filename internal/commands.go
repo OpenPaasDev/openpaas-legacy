@@ -6,23 +6,38 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/OpenPaas/openpaas/internal/ansible"
-	"github.com/OpenPaas/openpaas/internal/conf"
-	"github.com/OpenPaas/openpaas/internal/hashistack"
-	"github.com/OpenPaas/openpaas/internal/hashistack/vault"
-	"github.com/OpenPaas/openpaas/internal/o11y"
+	"github.com/OpenPaaSDev/openpaas/internal/ansible"
+	"github.com/OpenPaaSDev/openpaas/internal/conf"
+	"github.com/OpenPaaSDev/openpaas/internal/hashistack"
+	"github.com/OpenPaaSDev/openpaas/internal/hashistack/vault"
+	"github.com/OpenPaaSDev/openpaas/internal/o11y"
+	"github.com/OpenPaaSDev/openpaas/internal/util"
 	"github.com/foomo/htpasswd"
 
-	secret "github.com/OpenPaas/openpaas/internal/secrets"
+	secret "github.com/OpenPaaSDev/openpaas/internal/secrets"
 )
 
 func Bootstrap(ctx context.Context, config *conf.Config, configPath string) error {
+	publicIP, err := util.GetPublicIP(ctx)
+	if err != nil {
+		return err
+	}
+	foundIP := false
+	for _, ip := range config.CloudProviderConfig.AllowedIPs {
+		if ip == fmt.Sprintf("%s/32", publicIP) {
+			foundIP = true
+			break
+		}
+	}
+	if !foundIP {
+		config.CloudProviderConfig.AllowedIPs = append(config.CloudProviderConfig.AllowedIPs, fmt.Sprintf("%s/32", publicIP))
+	}
 	inventory := filepath.Join(config.BaseDir, "inventory")
 	dcName := config.DC
 	user := config.CloudProviderConfig.User
 	baseDir := config.BaseDir
 
-	err := hashistack.GenerateTerraform(config)
+	err = hashistack.GenerateTerraform(config)
 	if err != nil {
 		return err
 	}
@@ -54,25 +69,21 @@ func Bootstrap(ctx context.Context, config *conf.Config, configPath string) erro
 		return err
 	}
 
-	err = ansible.GenerateInventory(config)
+	inv, err := ansible.GenerateInventory(config)
 	if err != nil {
 		return err
 	}
-	inv, err := ansible.LoadInventory(inventory)
-	if err != nil {
-		return err
-	}
+
 	err = Configure(inv, baseDir, dcName)
 	if err != nil {
 		return err
 	}
 
-	setup := filepath.Join(baseDir, "base.yml")
-	secrets := filepath.Join(baseDir, "secrets", "secrets.yml")
+	secrets := secret.File(baseDir)
 
 	ansibleClient := ansible.NewClient(inventory, secrets, user, configPath)
 
-	err = ansibleClient.Run(setup)
+	err = ansibleClient.Run(filepath.Join(baseDir, "base.yml"))
 	if err != nil {
 		return err
 	}
@@ -105,15 +116,13 @@ func Bootstrap(ctx context.Context, config *conf.Config, configPath string) erro
 		return err
 	}
 
-	file := filepath.Join(config.BaseDir, "secrets", "consul.htpasswd")
-	name := "consul"
-	password := sec.ConsulBootstrapToken
-	err = htpasswd.SetPassword(file, name, password, htpasswd.HashBCrypt)
+	err = htpasswd.SetPassword(filepath.Join(config.BaseDir, "secrets", "consul.htpasswd"),
+		"consul", sec.ConsulBootstrapToken, htpasswd.HashBCrypt)
 	if err != nil {
 		return err
 	}
-	vaultSetup := filepath.Join(baseDir, "vault.yml")
-	err = ansibleClient.Run(vaultSetup)
+
+	err = ansibleClient.Run(filepath.Join(baseDir, "vault.yml"))
 	if err != nil {
 		return err
 	}
@@ -122,8 +131,7 @@ func Bootstrap(ctx context.Context, config *conf.Config, configPath string) erro
 		return err
 	}
 
-	nomadSetup := filepath.Join(baseDir, "nomad.yml")
-	err = ansibleClient.Run(nomadSetup)
+	err = ansibleClient.Run(filepath.Join(baseDir, "nomad.yml"))
 	if err != nil {
 		return err
 	}

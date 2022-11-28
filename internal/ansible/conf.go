@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/OpenPaas/openpaas/internal/conf"
+	"github.com/OpenPaaSDev/openpaas/internal/conf"
 	"gopkg.in/yaml.v3"
 )
 
@@ -148,10 +148,10 @@ func LoadInventory(file string) (*Inventory, error) {
 	return &config, nil
 }
 
-func GenerateInventory(config *conf.Config) error {
+func GenerateInventory(config *conf.Config) (*Inventory, error) {
 	jsonFile, err := os.Open(filepath.Clean(filepath.Join(config.BaseDir, "inventory-output.json")))
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer func() {
 		e := jsonFile.Close()
@@ -159,13 +159,13 @@ func GenerateInventory(config *conf.Config) error {
 	}()
 	byteValue, err := io.ReadAll(jsonFile)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	var inventory InventoryJson
 
 	err = json.Unmarshal(byteValue, &inventory)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	inv := Inventory{
@@ -303,8 +303,12 @@ func GenerateInventory(config *conf.Config) error {
 
 	bytes, err := yaml.Marshal(inv)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return os.WriteFile(filepath.Clean(filepath.Join(config.BaseDir, "inventory")), bytes, 0600)
+	err = os.WriteFile(filepath.Clean(filepath.Join(config.BaseDir, "inventory")), bytes, 0600)
+	if err != nil {
+		return nil, err
+	}
+	return &inv, nil
 }

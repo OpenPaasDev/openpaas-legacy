@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/OpenPaas/openpaas/internal/ansible"
-	"github.com/OpenPaas/openpaas/internal/hashistack"
-	"github.com/OpenPaas/openpaas/internal/secrets"
+	"github.com/OpenPaaSDev/openpaas/internal/ansible"
+	"github.com/OpenPaaSDev/openpaas/internal/hashistack"
+	"github.com/OpenPaaSDev/openpaas/internal/secrets"
 )
 
 func regenerateConsulPolicies(consul hashistack.Consul, inventory *ansible.Inventory, baseDir string) error {
@@ -80,7 +80,7 @@ func BootstrapConsul(consul hashistack.Consul, inventory *ansible.Inventory, sec
 	sec.FabioConsulToken = tokens["fabio"]
 	sec.VaultConsulToken = tokens["vault"]
 
-	err = secrets.Write(baseDir, sec)
+	err = sec.Write(baseDir)
 
 	return true, err
 }

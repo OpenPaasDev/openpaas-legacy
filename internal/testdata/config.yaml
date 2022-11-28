@@ -17,6 +17,8 @@ observability_config:
 cloud_provider_config:
   internal_network_interface_name: ens10
   sudo_user: root
+  allowed_ips:
+    - 85.4.84.201/32
   provider: hetzner
   provider_settings:
     location: nbg1
@@ -29,5 +31,4 @@ cloud_provider_config:
       base_server_name: nomad-srv
       firewall_name: dev_firewall
       network_name: dev_network
-    allowed_ips:
-    - 85.4.84.201/32
+

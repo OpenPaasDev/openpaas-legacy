@@ -11,10 +11,10 @@ import (
 
 	_ "embed"
 
-	"github.com/OpenPaas/openpaas/internal/ansible"
-	"github.com/OpenPaas/openpaas/internal/conf"
-	"github.com/OpenPaas/openpaas/internal/runtime"
-	"github.com/OpenPaas/openpaas/internal/secrets"
+	"github.com/OpenPaaSDev/openpaas/internal/ansible"
+	"github.com/OpenPaaSDev/openpaas/internal/conf"
+	"github.com/OpenPaaSDev/openpaas/internal/runtime"
+	"github.com/OpenPaaSDev/openpaas/internal/secrets"
 )
 
 //go:embed templates/vault/nomad-server-policy.hcl
@@ -84,7 +84,7 @@ func Init(config *conf.Config, inventory *ansible.Inventory, sec *secrets.Config
 	if err != nil {
 		return err
 	}
-	return secrets.Write(config.BaseDir, sec)
+	return sec.Write(config.BaseDir)
 }
 
 func initVault(baseDir, initFile string, vaultHosts []string, secrets *secrets.Config) (*secrets.Config, error) {

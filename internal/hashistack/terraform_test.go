@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/OpenPaas/openpaas/internal/conf"
-	"github.com/OpenPaas/openpaas/internal/util"
+	"github.com/OpenPaaSDev/openpaas/internal/conf"
+	"github.com/OpenPaaSDev/openpaas/internal/util"
 	"github.com/hashicorp/hcl2/gohcl"
 	"github.com/hashicorp/hcl2/hcl"
 	"github.com/hashicorp/hcl2/hclparse"

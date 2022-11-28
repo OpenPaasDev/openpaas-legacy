@@ -6,10 +6,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/OpenPaas/openpaas/internal/ansible"
-	"github.com/OpenPaas/openpaas/internal/secrets"
-	sec "github.com/OpenPaas/openpaas/internal/secrets"
-	"github.com/OpenPaas/openpaas/internal/util"
+	"github.com/OpenPaaSDev/openpaas/internal/ansible"
+	"github.com/OpenPaaSDev/openpaas/internal/secrets"
+	sec "github.com/OpenPaaSDev/openpaas/internal/secrets"
+	"github.com/OpenPaaSDev/openpaas/internal/util"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v3"
 )

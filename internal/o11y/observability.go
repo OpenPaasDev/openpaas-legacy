@@ -9,10 +9,10 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/OpenPaas/openpaas/internal/ansible"
-	"github.com/OpenPaas/openpaas/internal/conf"
-	"github.com/OpenPaas/openpaas/internal/hashistack"
-	"github.com/OpenPaas/openpaas/internal/secrets"
+	"github.com/OpenPaaSDev/openpaas/internal/ansible"
+	"github.com/OpenPaaSDev/openpaas/internal/conf"
+	"github.com/OpenPaaSDev/openpaas/internal/hashistack"
+	"github.com/OpenPaaSDev/openpaas/internal/secrets"
 )
 
 //go:embed templates/consul/intention.hcl

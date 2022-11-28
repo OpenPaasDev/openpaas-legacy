@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/OpenPaas/openpaas/internal"
-	"github.com/OpenPaas/openpaas/internal/conf"
-	"github.com/OpenPaas/openpaas/internal/util"
+	"github.com/OpenPaaSDev/openpaas/internal"
+	"github.com/OpenPaaSDev/openpaas/internal/conf"
+	"github.com/OpenPaaSDev/openpaas/internal/runtime"
 	"github.com/spf13/cobra"
 )
 
@@ -17,7 +17,7 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	if !util.HasDependencies() {
+	if !runtime.HasDependencies() {
 		os.Exit(1)
 	}
 

@@ -1,16 +1,18 @@
 package util
 
 import (
-	"bytes"
+	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"math/rand"
-	"os/exec"
-	"runtime"
-	"strings"
+	"net/http"
 	"time"
-
-	rt "github.com/OpenPaas/openpaas/internal/runtime"
 )
+
+type IP struct {
+	Query string
+}
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
@@ -26,46 +28,31 @@ func RandString(n int) string {
 	return string(b)
 }
 
-func commandExists(cmd string) bool {
-	_, err := exec.LookPath(cmd)
-	return err == nil
-}
+func GetPublicIP(ctx context.Context) (string, error) {
+	client := &http.Client{}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://ip-api.com/json/", nil)
+	if err != nil {
+		return "", err
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer func() {
+		e := resp.Body.Close()
+		fmt.Println(e)
+	}()
 
-func HasDependencies() bool {
-	dependencies := []string{
-		"consul",
-		"nomad",
-		"vault",
-		"ansible-playbook",
-		"cfssl",
-		"openssl",
-	}
+	body, err := io.ReadAll(resp.Body)
 
-	var b bytes.Buffer
-	if runtime.GOOS == "darwin" {
-		err := rt.Exec(&rt.EmptyEnv{}, "which openssl", &b)
-		if err != nil {
-			fmt.Println("openssl not present")
-			fmt.Println(err)
-			return false
-		}
-		if strings.Contains(b.String(), "/usr/bin/openssl") {
-			fmt.Println("openssl is required, however on MacOS, the default MacOS is not compatible with our requirements. Please install openssl with brew or nix and ensure it is on the PATH")
-			return false
-		}
+	if err != nil {
+		return "", err
 	}
-
-	missing := []string{}
-	for _, v := range dependencies {
-		if !commandExists(v) {
-			missing = append(missing, v)
-		}
+	var ip IP
+	err = json.Unmarshal(body, &ip)
+	if err != nil {
+		return "", err
 	}
-	if len(missing) > 0 {
-		fmt.Println("Local dependencies unsatisfied.\n Please install the following applications with your package manager of choice and ensure they are on the PATH:")
-	}
-	for _, v := range missing {
-		fmt.Printf("- %s\n", v)
-	}
-	return len(missing) == 0
+	// fmt.Print(ip.Query)
+	return ip.Query, nil
 }

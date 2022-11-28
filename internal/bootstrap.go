@@ -12,9 +12,8 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/OpenPaas/openpaas/internal/ansible"
-	"github.com/OpenPaas/openpaas/internal/secrets"
-	"gopkg.in/yaml.v3"
+	"github.com/OpenPaaSDev/openpaas/internal/ansible"
+	sec "github.com/OpenPaaSDev/openpaas/internal/secrets"
 )
 
 //go:embed templates/consul/resolved.conf
@@ -286,7 +285,7 @@ func Secrets(inventory *ansible.Inventory, baseDir, dcName string) error {
 		return fmt.Errorf("s3 compatible env variables missing for storing state: please set S3_ENDPOINT, S3_SECRET_KEY & S3_ACCESS_KEY")
 	}
 
-	secrets := &secrets.Config{
+	secrets := &sec.Config{
 		ConsulGossipKey:        consulGossipKey,
 		NomadGossipKey:         nomadGossipKey,
 		NomadClientConsulToken: "TBD",
@@ -299,12 +298,8 @@ func Secrets(inventory *ansible.Inventory, baseDir, dcName string) error {
 		S3AccessKey:            os.Getenv("S3_ACCESS_KEY"),
 	}
 
-	if _, err1 := os.Stat(filepath.Join(baseDir, "secrets", "secrets.yml")); errors.Is(err1, os.ErrNotExist) {
-		d, e := yaml.Marshal(&secrets)
-		if e != nil {
-			return e
-		}
-		e = os.WriteFile(filepath.Join(baseDir, "secrets", "secrets.yml"), d, 0600)
+	if _, err1 := os.Stat(sec.File(baseDir)); errors.Is(err1, os.ErrNotExist) {
+		e := secrets.Write(baseDir)
 		if e != nil {
 			return e
 		}

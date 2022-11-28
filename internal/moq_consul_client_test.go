@@ -4,7 +4,7 @@
 package internal
 
 import (
-	"github.com/OpenPaas/openpaas/internal/hashistack"
+	"github.com/OpenPaaSDev/openpaas/internal/hashistack"
 	"sync"
 )
 
