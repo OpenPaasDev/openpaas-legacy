@@ -7,7 +7,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/OpenPaas/openpaas/internal/ansible"
+	"github.com/OpenPaaSDev/openpaas/internal/ansible"
+	sec "github.com/OpenPaaSDev/openpaas/internal/secrets"
+	"github.com/OpenPaaSDev/openpaas/internal/util"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v3"
 )
@@ -30,7 +32,7 @@ func init() {
 }
 
 func TestMakeConsulPoliciesAndHashiConfigs(t *testing.T) {
-	folder := RandString(8)
+	folder := util.RandString(8)
 	defer func() {
 		assert.NoError(t, os.RemoveAll(filepath.Clean((filepath.Join(folder)))))
 	}()
@@ -85,7 +87,7 @@ func TestMakeConsulPoliciesAndHashiConfigs(t *testing.T) {
 }
 
 func TestMakeSecrets(t *testing.T) {
-	folder := RandString(8)
+	folder := util.RandString(8)
 	defer func() {
 		err := os.RemoveAll(folder)
 		assert.NoError(t, err)
@@ -149,7 +151,7 @@ func TestMakeSecrets(t *testing.T) {
 		assertFileExists(t, filepath.Join(nomadDir, path))
 	}
 
-	secrets, err := getSecrets(folder)
+	secrets, err := sec.Load(folder)
 	assert.NoError(t, err)
 	assert.Equal(t, "TBD", secrets.ConsulBootstrapToken)
 	assert.Equal(t, "TBD", secrets.ConsulAgentToken)

@@ -12,9 +12,8 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/OpenPaas/openpaas/internal/ansible"
-	"github.com/OpenPaas/openpaas/internal/secrets"
-	"gopkg.in/yaml.v3"
+	"github.com/OpenPaaSDev/openpaas/internal/ansible"
+	sec "github.com/OpenPaaSDev/openpaas/internal/secrets"
 )
 
 //go:embed templates/consul/resolved.conf
@@ -137,32 +136,6 @@ func Configure(inventory *ansible.Inventory, baseDir, dcName string) error {
 
 	err = Secrets(inventory, baseDir, dcName)
 	return err
-}
-
-func getSecrets(baseDir string) (*secrets.Config, error) {
-	bytes, err := os.ReadFile(filepath.Clean(filepath.Join(baseDir, "secrets", "secrets.yml")))
-	if err != nil {
-		return nil, err
-	}
-	var secrets secrets.Config
-	err = yaml.Unmarshal(bytes, &secrets)
-	if err != nil {
-		return nil, err
-	}
-	return &secrets, nil
-}
-
-func writeSecrets(baseDir string, secrets *secrets.Config) error {
-	bytes, err := yaml.Marshal(secrets)
-	if err != nil {
-		return err
-	}
-
-	err = os.WriteFile(filepath.Join(baseDir, "secrets", "secrets.yml"), bytes, 0600)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func makeConsulPolicies(inventory *ansible.Inventory, baseDir string) error {
@@ -312,7 +285,7 @@ func Secrets(inventory *ansible.Inventory, baseDir, dcName string) error {
 		return fmt.Errorf("s3 compatible env variables missing for storing state: please set S3_ENDPOINT, S3_SECRET_KEY & S3_ACCESS_KEY")
 	}
 
-	secrets := &secrets.Config{
+	secrets := &sec.Config{
 		ConsulGossipKey:        consulGossipKey,
 		NomadGossipKey:         nomadGossipKey,
 		NomadClientConsulToken: "TBD",
@@ -325,12 +298,8 @@ func Secrets(inventory *ansible.Inventory, baseDir, dcName string) error {
 		S3AccessKey:            os.Getenv("S3_ACCESS_KEY"),
 	}
 
-	if _, err1 := os.Stat(filepath.Join(baseDir, "secrets", "secrets.yml")); errors.Is(err1, os.ErrNotExist) {
-		d, e := yaml.Marshal(&secrets)
-		if e != nil {
-			return e
-		}
-		e = os.WriteFile(filepath.Join(baseDir, "secrets", "secrets.yml"), d, 0600)
+	if _, err1 := os.Stat(sec.File(baseDir)); errors.Is(err1, os.ErrNotExist) {
+		e := secrets.Write(baseDir)
 		if e != nil {
 			return e
 		}

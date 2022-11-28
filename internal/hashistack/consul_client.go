@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/OpenPaas/openpaas/internal/ansible"
-	"github.com/OpenPaas/openpaas/internal/secrets"
+	"github.com/OpenPaaSDev/openpaas/internal/ansible"
+	"github.com/OpenPaaSDev/openpaas/internal/secrets"
 )
 
 type Consul interface {

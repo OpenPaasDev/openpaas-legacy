@@ -5,35 +5,50 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"time"
 
-	"github.com/OpenPaas/openpaas/internal/ansible"
-	"github.com/OpenPaas/openpaas/internal/hashistack"
+	"github.com/OpenPaaSDev/openpaas/internal/ansible"
+	"github.com/OpenPaaSDev/openpaas/internal/conf"
+	"github.com/OpenPaaSDev/openpaas/internal/hashistack"
+	"github.com/OpenPaaSDev/openpaas/internal/hashistack/vault"
+	"github.com/OpenPaaSDev/openpaas/internal/o11y"
+	"github.com/OpenPaaSDev/openpaas/internal/util"
 	"github.com/foomo/htpasswd"
+
+	secret "github.com/OpenPaaSDev/openpaas/internal/secrets"
 )
 
-func Bootstrap(ctx context.Context, config *Config, configPath string) error {
+func Bootstrap(ctx context.Context, config *conf.Config, configPath string) error {
+	publicIP, err := util.GetPublicIP(ctx)
+	if err != nil {
+		return err
+	}
+	foundIP := false
+	for _, ip := range config.CloudProviderConfig.AllowedIPs {
+		if ip == fmt.Sprintf("%s/32", publicIP) {
+			foundIP = true
+			break
+		}
+	}
+	if !foundIP {
+		config.CloudProviderConfig.AllowedIPs = append(config.CloudProviderConfig.AllowedIPs, fmt.Sprintf("%s/32", publicIP))
+	}
 	inventory := filepath.Join(config.BaseDir, "inventory")
 	dcName := config.DC
 	user := config.CloudProviderConfig.User
 	baseDir := config.BaseDir
 
-	ips, err := GetCloudflareIPs(ctx)
-	if err != nil {
-		return err
-	}
-	err = GenerateTerraform(config, ips)
+	err = hashistack.GenerateTerraform(config)
 	if err != nil {
 		return err
 	}
 
-	tf, err := InitTf(ctx, filepath.Join(config.BaseDir, "terraform"), os.Stdout, os.Stderr)
+	tf, err := hashistack.InitTf(ctx, filepath.Join(config.BaseDir, "terraform"), os.Stdout, os.Stderr)
 	if err != nil {
 		return err
 	}
 	os.Remove(filepath.Join(config.BaseDir, "inventory-output.json")) //nolint
 
-	err = tf.Apply(ctx, LoadTFExecVars(config))
+	err = tf.Apply(ctx, conf.LoadTFExecVars(config))
 	if err != nil {
 		panic(err)
 	}
@@ -45,7 +60,7 @@ func Bootstrap(ctx context.Context, config *Config, configPath string) error {
 		e := f.Close()
 		fmt.Println(e)
 	}()
-	tf, err = InitTf(ctx, filepath.Join(config.BaseDir, "terraform"), f, os.Stderr)
+	tf, err = hashistack.InitTf(ctx, filepath.Join(config.BaseDir, "terraform"), f, os.Stderr)
 	if err != nil {
 		return err
 	}
@@ -54,76 +69,69 @@ func Bootstrap(ctx context.Context, config *Config, configPath string) error {
 		return err
 	}
 
-	err = GenerateInventory(config)
+	inv, err := ansible.GenerateInventory(config)
 	if err != nil {
 		return err
 	}
-	inv, err := ansible.LoadInventory(inventory)
-	if err != nil {
-		return err
-	}
+
 	err = Configure(inv, baseDir, dcName)
 	if err != nil {
 		return err
 	}
-	setup := filepath.Join(baseDir, "base.yml")
-	secrets := filepath.Join(baseDir, "secrets", "secrets.yml")
-	fmt.Println("sleeping 10s to ensure all nodes are available..")
-	time.Sleep(10 * time.Second)
 
-	err = runCmd("", fmt.Sprintf("ansible-playbook %s -i %s -u %s -e @%s -e @%s", setup, inventory, user, secrets, configPath), os.Stdout)
+	secrets := secret.File(baseDir)
+
+	ansibleClient := ansible.NewClient(inventory, secrets, user, configPath)
+
+	err = ansibleClient.Run(filepath.Join(baseDir, "base.yml"))
 	if err != nil {
 		return err
 	}
 	consulSetup := filepath.Join(baseDir, "consul.yml")
-	err = runCmd("", fmt.Sprintf("ansible-playbook %s -i %s -u %s -e @%s -e @%s", consulSetup, inventory, user, secrets, configPath), os.Stdout)
+	err = ansibleClient.Run(consulSetup)
 	if err != nil {
 		return err
 	}
 
-	sec, err := getSecrets(baseDir)
+	sec, err := secret.Load(baseDir)
 	if err != nil {
 		return err
 	}
+
 	consul := hashistack.NewConsul(inv, sec, baseDir)
-	hasBootstrapped, err := BootstrapConsul(consul, inv, baseDir)
+	hasBootstrapped, err := BootstrapConsul(consul, inv, sec, baseDir)
 	if err != nil {
 		return err
 	}
 	if hasBootstrapped {
 		fmt.Println("Bootstrapped Consul ACL, re-running Ansible...")
-		err = runCmd("", fmt.Sprintf("ansible-playbook %s -i %s -u %s -e @%s -e @%s", consulSetup, inventory, user, secrets, configPath), os.Stdout)
+		err = ansibleClient.Run(consulSetup)
 		if err != nil {
 			return err
 		}
 	}
-	err = generateTLS(config, inv)
-	if err != nil {
-		return err
-	}
-	sec, err = getSecrets(baseDir)
-	if err != nil {
-		return err
-	}
-	file := filepath.Join(config.BaseDir, "secrets", "consul.htpasswd")
-	name := "consul"
-	password := sec.ConsulBootstrapToken
-	err = htpasswd.SetPassword(file, name, password, htpasswd.HashBCrypt)
-	if err != nil {
-		return err
-	}
-	vaultSetup := filepath.Join(baseDir, "vault.yml")
-	err = runCmd("", fmt.Sprintf("ansible-playbook %s -i %s -u %s -e @%s -e @%s", vaultSetup, inventory, user, secrets, configPath), os.Stdout)
-	if err != nil {
-		return err
-	}
-	err = Vault(config, inv)
+
+	err = vault.GenerateTLS(config, inv)
 	if err != nil {
 		return err
 	}
 
-	nomadSetup := filepath.Join(baseDir, "nomad.yml")
-	err = runCmd("", fmt.Sprintf("ansible-playbook %s -i %s -u %s -e @%s -e @%s", nomadSetup, inventory, user, secrets, configPath), os.Stdout)
+	err = htpasswd.SetPassword(filepath.Join(config.BaseDir, "secrets", "consul.htpasswd"),
+		"consul", sec.ConsulBootstrapToken, htpasswd.HashBCrypt)
+	if err != nil {
+		return err
+	}
+
+	err = ansibleClient.Run(filepath.Join(baseDir, "vault.yml"))
+	if err != nil {
+		return err
+	}
+	err = vault.Init(config, inv, sec)
+	if err != nil {
+		return err
+	}
+
+	err = ansibleClient.Run(filepath.Join(baseDir, "nomad.yml"))
 	if err != nil {
 		return err
 	}
@@ -142,5 +150,5 @@ func Bootstrap(ctx context.Context, config *Config, configPath string) error {
 		return err
 	}
 
-	return Observability(config, inventory, configPath)
+	return o11y.Init(config, inventory, configPath, sec, consul, ansibleClient)
 }

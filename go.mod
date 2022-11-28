@@ -1,4 +1,4 @@
-module github.com/OpenPaas/openpaas
+module github.com/OpenPaaSDev/openpaas
 
 go 1.19
 

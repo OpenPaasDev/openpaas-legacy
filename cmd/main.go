@@ -4,9 +4,10 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"path/filepath"
 
-	"github.com/OpenPaas/openpaas/internal"
+	"github.com/OpenPaaSDev/openpaas/internal"
+	"github.com/OpenPaaSDev/openpaas/internal/conf"
+	"github.com/OpenPaaSDev/openpaas/internal/runtime"
 	"github.com/spf13/cobra"
 )
 
@@ -16,7 +17,7 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	if !internal.HasDependencies() {
+	if !runtime.HasDependencies() {
 		os.Exit(1)
 	}
 
@@ -32,7 +33,7 @@ func main() {
 		},
 	}
 
-	rootCmd.AddCommand(sync(), observability(), envRC())
+	rootCmd.AddCommand(sync(), envRC())
 
 	err = rootCmd.Execute()
 	if err != nil {
@@ -48,7 +49,7 @@ func sync() *cobra.Command {
 		Short: "bootstraps and starts a cluster or syncs the cluster to its desired state",
 		Long:  `bootstraps and starts a cluster or syncs the cluster to its desired state`,
 		Run: func(cmd *cobra.Command, args []string) {
-			config, err := internal.LoadConfig(configFile)
+			config, err := conf.Load(configFile)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -74,7 +75,7 @@ func envRC() *cobra.Command {
 		Short: "Generate env file to source for your environment",
 		Long:  `Generate env file to source for your environment`,
 		Run: func(cmd *cobra.Command, args []string) {
-			config, err := internal.LoadConfig(configFile)
+			config, err := conf.Load(configFile)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -95,30 +96,6 @@ func envRC() *cobra.Command {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-
-	return cmd
-}
-
-func observability() *cobra.Command {
-	var configFile string
-	cmd := &cobra.Command{
-		Use:   "observability",
-		Short: "adds observability to a cluster",
-		Long:  `adds observability a cluster`,
-		Run: func(cmd *cobra.Command, args []string) {
-			config, err := internal.LoadConfig(configFile)
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
-			err = internal.Observability(config, filepath.Join(config.BaseDir, "inventory"), configFile)
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
-		},
-	}
-	addFlags(cmd, &configFile)
 
 	return cmd
 }

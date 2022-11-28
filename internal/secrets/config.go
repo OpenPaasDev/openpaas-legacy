@@ -1,5 +1,12 @@
 package secrets
 
+import (
+	"os"
+	"path/filepath"
+
+	"gopkg.in/yaml.v3"
+)
+
 type Config struct {
 	ConsulGossipKey        string       `yaml:"CONSUL_GOSSIP_KEY"`
 	NomadGossipKey         string       `yaml:"NOMAD_GOSSIP_KEY"`
@@ -20,4 +27,34 @@ type VaultSecrets struct {
 	RootToken      string   `yaml:"root_token"`
 	UnsealKeys     []string `yaml:"unseal_keys"`
 	NomadRootToken string   `yaml:"nomad_root_token"`
+}
+
+func Load(baseDir string) (*Config, error) {
+	bytes, err := os.ReadFile(filepath.Clean(File(baseDir)))
+	if err != nil {
+		return nil, err
+	}
+	var secrets Config
+	err = yaml.Unmarshal(bytes, &secrets)
+	if err != nil {
+		return nil, err
+	}
+	return &secrets, nil
+}
+
+func (sec *Config) Write(baseDir string) error {
+	bytes, err := yaml.Marshal(sec)
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(filepath.Clean(File(baseDir)), bytes, 0600)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func File(baseDir string) string {
+	return filepath.Join(baseDir, "secrets", "secrets.yml")
 }

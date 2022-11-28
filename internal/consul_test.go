@@ -6,8 +6,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/OpenPaas/openpaas/internal/ansible"
-	"github.com/OpenPaas/openpaas/internal/secrets"
+	"github.com/OpenPaaSDev/openpaas/internal/ansible"
+	"github.com/OpenPaaSDev/openpaas/internal/secrets"
+	sec "github.com/OpenPaaSDev/openpaas/internal/secrets"
+	"github.com/OpenPaaSDev/openpaas/internal/util"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v3"
 )
@@ -22,7 +24,7 @@ import (
 // }
 
 func TestBootstrapConsul(t *testing.T) {
-	folder := RandString(8)
+	folder := util.RandString(8)
 	assert.NoError(t, os.MkdirAll(filepath.Clean(filepath.Join(folder, "secrets")), 0750))
 
 	assert.NoError(t, os.MkdirAll(filepath.Clean(filepath.Join(folder, "consul")), 0750))
@@ -43,13 +45,15 @@ func TestBootstrapConsul(t *testing.T) {
 	}
 	inv, err := ansible.LoadInventory(filepath.Join("testdata", "inventory"))
 	assert.NoError(t, err)
-	b, err := BootstrapConsul(consul, inv, folder)
+	secrets, err := sec.Load(folder)
+	assert.NoError(t, err)
+	b, err := BootstrapConsul(consul, inv, secrets, folder)
 	assert.NoError(t, err)
 	assert.True(t, b)
 	assert.Equal(t, 7, len(consul.RegisterPolicyCalls()))
 
 	assert.Equal(t, 6, len(consul.RegisterACLCalls()))
-	newSecrets, err := getSecrets(folder)
+	newSecrets, err := sec.Load(folder)
 	assert.NoError(t, err)
 
 	assert.Equal(t, newSecrets.ConsulBootstrapToken, "bootstrap-token")

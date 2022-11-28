@@ -26,6 +26,8 @@ cloud_provider_config:
   sudo_user: root
   sudo_dir: /root
   provider: hetzner
+  # allowed_ips:
+  #   - 85.4.76.161/32
   provider_settings:
     location: nbg1
     ssh_keys:
@@ -40,5 +42,4 @@ cloud_provider_config:
       base_server_name: venue
       firewall_name: dev_firewall
       network_name: dev_network
-    allowed_ips:
-    - 85.4.76.161/32
+

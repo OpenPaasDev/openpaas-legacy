@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/OpenPaas/openpaas/internal/ansible"
-	"github.com/OpenPaas/openpaas/internal/hashistack"
+	"github.com/OpenPaaSDev/openpaas/internal/ansible"
+	"github.com/OpenPaaSDev/openpaas/internal/hashistack"
+	"github.com/OpenPaaSDev/openpaas/internal/secrets"
 )
 
 func regenerateConsulPolicies(consul hashistack.Consul, inventory *ansible.Inventory, baseDir string) error {
@@ -19,22 +20,18 @@ func regenerateConsulPolicies(consul hashistack.Consul, inventory *ansible.Inven
 	return consul.UpdatePolicy("consul-policies", policyConsul)
 }
 
-func BootstrapConsul(consul hashistack.Consul, inventory *ansible.Inventory, baseDir string) (bool, error) {
-	secrets, err := getSecrets(baseDir)
+func BootstrapConsul(consul hashistack.Consul, inventory *ansible.Inventory, sec *secrets.Config, baseDir string) (bool, error) {
+
+	if sec.ConsulBootstrapToken != "TBD" {
+		err := regenerateConsulPolicies(consul, inventory, baseDir)
+		return false, err
+	}
+	token, err := consul.Bootstrap()
 	if err != nil {
 		return false, err
 	}
 
-	if secrets.ConsulBootstrapToken != "TBD" {
-		err = regenerateConsulPolicies(consul, inventory, baseDir)
-		return false, err
-	}
-	token, err := consul.Bootstrap()
-	if secrets.ConsulBootstrapToken != "TBD" {
-		return false, err
-	}
-
-	secrets.ConsulBootstrapToken = token
+	sec.ConsulBootstrapToken = token
 
 	policies := map[string]string{
 		"consul-policies":    filepath.Join(baseDir, "consul", "consul-policies.hcl"),
@@ -76,14 +73,14 @@ func BootstrapConsul(consul hashistack.Consul, inventory *ansible.Inventory, bas
 		tokens[v] = clientToken
 	}
 
-	secrets.ConsulAgentToken = tokens["consul-policies"]
-	secrets.NomadClientConsulToken = tokens["nomad-client"]
-	secrets.NomadServerConsulToken = tokens["nomad-server"]
-	secrets.PrometheusConsulToken = tokens["prometheus"]
-	secrets.FabioConsulToken = tokens["fabio"]
-	secrets.VaultConsulToken = tokens["vault"]
+	sec.ConsulAgentToken = tokens["consul-policies"]
+	sec.NomadClientConsulToken = tokens["nomad-client"]
+	sec.NomadServerConsulToken = tokens["nomad-server"]
+	sec.PrometheusConsulToken = tokens["prometheus"]
+	sec.FabioConsulToken = tokens["fabio"]
+	sec.VaultConsulToken = tokens["vault"]
 
-	err = writeSecrets(baseDir, secrets)
+	err = sec.Write(baseDir)
 
 	return true, err
 }

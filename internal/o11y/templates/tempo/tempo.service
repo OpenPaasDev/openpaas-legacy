@@ -1,0 +1,19 @@
+[Unit]
+Description=Tempo
+Documentation=https://prometheus.io/docs/introduction/overview/
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+ExecReload=/bin/kill -HUP $MAINPID
+ExecStart=/usr/local/bin/tempo \
+  --config.file=/etc/tempo/tempo.yml
+
+SyslogIdentifier=tempo
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
