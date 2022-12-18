@@ -109,8 +109,7 @@ func LoadTFVarsConfig(config Config) (*TFVarsConfig, error) {
 	}, nil
 }
 
-func LoadTFExecVars(config *Config) *tfexec.VarOption {
-
+func LoadTFExecVars() *tfexec.VarOption {
 	token := os.Getenv("HETZNER_TOKEN")
 	return tfexec.Var(fmt.Sprintf("hcloud_token=%s", token))
 }

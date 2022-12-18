@@ -34,7 +34,7 @@ cloud_provider_config:
     - wille.faler@gmail.com
     load_balancer_type: lb11
     ssl_certificate_ids:
-    - 1107238 # use Hetzner hcloud CLI tool to retrieve numeric ID: "hcloud certificate list"
+    - 1122373 # use Hetzner hcloud CLI tool to retrieve numeric ID: "hcloud certificate list"
     server_instance_type: cx21
     client_instance_type: cpx31
     observability_instance_type: cpx21

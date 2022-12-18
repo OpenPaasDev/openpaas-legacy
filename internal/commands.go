@@ -48,7 +48,7 @@ func Bootstrap(ctx context.Context, config *conf.Config, configPath string) erro
 	}
 	os.Remove(filepath.Join(config.BaseDir, "inventory-output.json")) //nolint
 
-	err = tf.Apply(ctx, conf.LoadTFExecVars(config))
+	err = tf.Apply(ctx, conf.LoadTFExecVars())
 	if err != nil {
 		panic(err)
 	}

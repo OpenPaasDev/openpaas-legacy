@@ -1,0 +1,8 @@
+---
+- hosts: all
+  become: no
+  connection: local
+  tasks:
+    - name: "Ansible | List all known variables and facts"
+      debug:
+        var: hostvars[inventory_hostname]

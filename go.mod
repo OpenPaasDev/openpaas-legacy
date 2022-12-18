@@ -2,6 +2,7 @@ module github.com/OpenPaaSDev/openpaas
 
 go 1.19
 
+
 require (
 	github.com/foomo/htpasswd v0.0.0-20200116085101-e3a90e78da9c
 	github.com/hashicorp/go-version v1.6.0
@@ -10,7 +11,7 @@ require (
 	github.com/hashicorp/terraform-exec v0.17.3
 	github.com/spf13/cobra v1.6.1
 	github.com/stretchr/testify v1.8.1
-	github.com/zclconf/go-cty v1.11.1
+	github.com/zclconf/go-cty v1.12.1
 	gopkg.in/yaml.v3 v3.0.1
 )
 
