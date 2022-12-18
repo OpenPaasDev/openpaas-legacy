@@ -15,14 +15,20 @@ type Environment interface {
 	WorkingDir() string
 }
 
-type EmptyEnv struct{}
+type EmptyEnv struct {
+	baseDir string
+}
+
+func EnvWithDir(baseDir string) Environment {
+	return &EmptyEnv{baseDir: baseDir}
+}
 
 func (e *EmptyEnv) Get() map[string]string {
 	return make(map[string]string)
 }
 
 func (e *EmptyEnv) WorkingDir() string {
-	return ""
+	return e.baseDir
 }
 
 func Exec(env Environment, command string, stdOut io.Writer) error {

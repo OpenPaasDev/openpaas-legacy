@@ -5,14 +5,13 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
-	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"text/template"
 
 	"github.com/OpenPaaSDev/openpaas/internal/ansible"
+	"github.com/OpenPaaSDev/openpaas/internal/runtime"
 	sec "github.com/OpenPaaSDev/openpaas/internal/secrets"
 )
 
@@ -262,7 +261,7 @@ func makeConfigs(inventory *ansible.Inventory, baseDir, dcName string) error {
 
 func Secrets(inventory *ansible.Inventory, baseDir, dcName string) error {
 	var out bytes.Buffer
-	err := runCmd("", "consul keygen", &out)
+	err := runtime.Exec(&runtime.EmptyEnv{}, "consul keygen", &out)
 	if err != nil {
 		return err
 	}
@@ -275,7 +274,7 @@ func Secrets(inventory *ansible.Inventory, baseDir, dcName string) error {
 	consulGossipKey := strings.ReplaceAll(out.String(), "\n", "")
 
 	var out2 bytes.Buffer
-	err = runCmd("", "nomad operator keygen", &out2)
+	err = runtime.Exec(&runtime.EmptyEnv{}, "nomad operator keygen", &out2)
 
 	if err != nil {
 		return err
@@ -313,11 +312,11 @@ func Secrets(inventory *ansible.Inventory, baseDir, dcName string) error {
 		return err
 	}
 	if _, err := os.Stat(filepath.Join(baseDir, "secrets", "consul", "consul-agent-ca.pem")); errors.Is(err, os.ErrNotExist) {
-		err = runCmd(consulSecretDir, "consul tls ca create", os.Stdout)
+		err = runtime.Exec(runtime.EnvWithDir(consulSecretDir), "consul tls ca create", os.Stdout)
 		if err != nil {
 			return err
 		}
-		err = runCmd(consulSecretDir, fmt.Sprintf("consul tls cert create -server -dc %s", dcName), os.Stdout)
+		err = runtime.Exec(runtime.EnvWithDir(consulSecretDir), fmt.Sprintf("consul tls cert create -server -dc %s", dcName), os.Stdout)
 		if err != nil {
 			return err
 		}
@@ -325,7 +324,7 @@ func Secrets(inventory *ansible.Inventory, baseDir, dcName string) error {
 	}
 
 	if _, err := os.Stat(filepath.Join(baseDir, "secrets", "nomad", "cli.pem")); errors.Is(err, os.ErrNotExist) {
-		err = runCmd(nomadSecretDir, "cfssl print-defaults csr | cfssl gencert -initca - | cfssljson -bare nomad-ca", os.Stdout)
+		err = runtime.Exec(runtime.EnvWithDir(nomadSecretDir), "cfssl print-defaults csr | cfssl gencert -initca - | cfssljson -bare nomad-ca", os.Stdout)
 		if err != nil {
 			return err
 		}
@@ -338,36 +337,21 @@ func Secrets(inventory *ansible.Inventory, baseDir, dcName string) error {
 		if err != nil {
 			return err
 		}
-		err = runCmd(nomadSecretDir, fmt.Sprintf(`echo '{}' | cfssl gencert -ca=nomad-ca.pem -ca-key=nomad-ca-key.pem -config=cfssl.json -hostname="%s" - | cfssljson -bare server`, hostString), os.Stdout)
+		err = runtime.Exec(runtime.EnvWithDir(nomadSecretDir), fmt.Sprintf(`echo '{}' | cfssl gencert -ca=nomad-ca.pem -ca-key=nomad-ca-key.pem -config=cfssl.json -hostname="%s" - | cfssljson -bare server`, hostString), os.Stdout)
 		if err != nil {
 			return err
 		}
 
-		err = runCmd(nomadSecretDir, fmt.Sprintf(`echo '{}' | cfssl gencert -ca=nomad-ca.pem -ca-key=nomad-ca-key.pem -config=cfssl.json -hostname="%s" - | cfssljson -bare client`, hostString), os.Stdout)
+		err = runtime.Exec(runtime.EnvWithDir(nomadSecretDir), fmt.Sprintf(`echo '{}' | cfssl gencert -ca=nomad-ca.pem -ca-key=nomad-ca-key.pem -config=cfssl.json -hostname="%s" - | cfssljson -bare client`, hostString), os.Stdout)
 		if err != nil {
 			return err
 		}
 
-		err = runCmd(nomadSecretDir, fmt.Sprintf(`echo '{}' | cfssl gencert -ca=nomad-ca.pem -ca-key=nomad-ca-key.pem -config=cfssl.json -hostname="%s" - | cfssljson -bare cli`, hostString), os.Stdout)
+		err = runtime.Exec(runtime.EnvWithDir(nomadSecretDir), fmt.Sprintf(`echo '{}' | cfssl gencert -ca=nomad-ca.pem -ca-key=nomad-ca-key.pem -config=cfssl.json -hostname="%s" - | cfssljson -bare cli`, hostString), os.Stdout)
 		if err != nil {
 			return err
 		}
 
 	}
 	return nil
-}
-
-func runCmd(dir, command string, stdOut io.Writer) error {
-	cmd := exec.Command("/bin/sh", "-c", command)
-	if dir != "" {
-		cmd.Dir = dir
-	}
-	cmd.Stdout = stdOut
-	cmd.Stderr = os.Stderr
-
-	err := cmd.Start()
-	if err != nil {
-		return err
-	}
-	return cmd.Wait()
 }
