@@ -14,15 +14,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-//TODO reinstante this test
-// func TestParseConsulToken(t *testing.T) {
-
-// 	token, err := parseConsulToken(filepath.Join("testdata", "bootstrap.txt"))
-// 	assert.NoError(t, err)
-// 	assert.Equal(t, "4456269a-e46a-c5bd-08d5-914552161f02", token)
-
-// }
-
 func TestBootstrapConsul(t *testing.T) {
 	folder := util.RandString(8)
 	assert.NoError(t, os.MkdirAll(filepath.Clean(filepath.Join(folder, "secrets")), 0750))
