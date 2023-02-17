@@ -1,31 +1,53 @@
 package ansible
 
-// func TestGenerateInventory(t *testing.T) {
-// 	config, err := LoadConfig("testdata/config.yaml")
-// 	assert.NoError(t, err)
+import (
+	"log"
+	"os"
+	"path/filepath"
+	"testing"
 
-// 	folder := RandString(8)
-// 	config.BaseDir = folder
-// 	err = os.MkdirAll(folder, 0700)
-// 	assert.NoError(t, err)
-// 	defer func() {
-// 		e := os.RemoveAll(filepath.Join(folder))
-// 		assert.NoError(t, e)
-// 	}()
+	"github.com/OpenPaaSDev/openpaas/internal/conf"
+	"github.com/OpenPaaSDev/openpaas/internal/util"
+	"github.com/stretchr/testify/assert"
+)
 
-// 	src := filepath.Join("testdata", "inventory.json")
-// 	dest := filepath.Join(folder, "inventory-output.json")
+func TestGenerateInventory(t *testing.T) {
+	config, err := conf.Load(filepath.Join("testdata", "config.yaml"))
+	assert.NoError(t, err)
 
-// 	bytesRead, err := os.ReadFile(filepath.Clean(src))
-// 	assert.NoError(t, err)
-// 	fmt.Println(string(bytesRead))
+	folder := util.RandString(8)
+	config.BaseDir = folder
+	err = os.MkdirAll(folder, 0700)
+	assert.NoError(t, err)
+	defer func() {
+		e := os.RemoveAll(filepath.Join(folder))
+		assert.NoError(t, e)
+	}()
+	src := filepath.Join("testdata", "inventory-output.json")
+	dest := filepath.Join(folder, "inventory-output.json")
 
-// 	err = os.WriteFile(filepath.Clean(dest), bytesRead, 0600)
-// 	assert.NoError(t, err)
+	bytesRead, err := os.ReadFile(filepath.Clean(src))
 
-// 	err = GenerateInventory(config)
-// 	assert.NoError(t, err)
-// 	bytesRead, err = os.ReadFile(filepath.Clean(filepath.Join(folder, "inventory")))
-// 	assert.NoError(t, err)
-// 	assert.Equal(t, inventoryResultTest, string(bytesRead))
-// }
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = os.WriteFile(dest, bytesRead, 0600)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	inventory, err := GenerateInventory(config)
+	assert.NoError(t, err)
+
+	assert.FileExists(t, filepath.Join(folder, "inventory"))
+
+	assert.NotEmpty(t, inventory.GetAllPrivateHosts())
+
+	_, err = LoadInventory(filepath.Join(folder, "inventory"))
+	assert.NoError(t, err)
+
+	assert.NotEmpty(t, inventory.All.Children.Clients.GetHosts())
+
+}

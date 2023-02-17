@@ -1,0 +1,258 @@
+{
+  "client_servers": {
+    "sensitive": false,
+    "type": [
+      "tuple",
+      [
+        [
+          "object",
+          {
+            "host": "string",
+            "host_name": "string",
+            "private_ip": "string",
+            "server_id": "string"
+          }
+        ],
+        [
+          "object",
+          {
+            "host": "string",
+            "host_name": "string",
+            "private_ip": "string",
+            "server_id": "string"
+          }
+        ]
+      ]
+    ],
+    "value": [
+      {
+        "host": "167.235.74.58",
+        "host_name": "venue-client-1",
+        "private_ip": "10.0.3.2",
+        "server_id": "26629360"
+      },
+      {
+        "host": "5.75.161.39",
+        "host_name": "venue-client-2",
+        "private_ip": "10.0.3.3",
+        "server_id": "26629358"
+      }
+    ]
+  },
+  "client_volumes": {
+    "sensitive": false,
+    "type": [
+      "tuple",
+      [
+        [
+          "object",
+          {
+            "is_nomad": "bool",
+            "mount": "string",
+            "name": "string",
+            "path": "string",
+            "server_id": "number"
+          }
+        ]
+      ]
+    ],
+    "value": [
+      {
+        "is_nomad": true,
+        "mount": "/mnt/HC_Volume_25709832",
+        "name": "data_vol",
+        "path": "/opt/nomad_client_data",
+        "server_id": 26629360
+      }
+    ]
+  },
+  "consul_servers": {
+    "sensitive": false,
+    "type": [
+      "tuple",
+      []
+    ],
+    "value": []
+  },
+  "consul_volumes": {
+    "sensitive": false,
+    "type": [
+      "tuple",
+      [
+        [
+          "object",
+          {
+            "is_nomad": "bool",
+            "mount": "string",
+            "name": "string",
+            "path": "string",
+            "server_id": "number"
+          }
+        ],
+        [
+          "object",
+          {
+            "is_nomad": "bool",
+            "mount": "string",
+            "name": "string",
+            "path": "string",
+            "server_id": "number"
+          }
+        ],
+        [
+          "object",
+          {
+            "is_nomad": "bool",
+            "mount": "string",
+            "name": "string",
+            "path": "string",
+            "server_id": "number"
+          }
+        ]
+      ]
+    ],
+    "value": [
+      {
+        "is_nomad": false,
+        "mount": "/mnt/HC_Volume_25709831",
+        "name": "",
+        "path": "/opt/consul",
+        "server_id": 26629364
+      },
+      {
+        "is_nomad": false,
+        "mount": "/mnt/HC_Volume_25709834",
+        "name": "",
+        "path": "/opt/consul",
+        "server_id": 26629361
+      },
+      {
+        "is_nomad": false,
+        "mount": "/mnt/HC_Volume_25709835",
+        "name": "",
+        "path": "/opt/consul",
+        "server_id": 26629357
+      }
+    ]
+  },
+  "nomad_servers": {
+    "sensitive": false,
+    "type": [
+      "tuple",
+      [
+        [
+          "object",
+          {
+            "host": "string",
+            "host_name": "string",
+            "private_ip": "string",
+            "server_id": "string"
+          }
+        ],
+        [
+          "object",
+          {
+            "host": "string",
+            "host_name": "string",
+            "private_ip": "string",
+            "server_id": "string"
+          }
+        ],
+        [
+          "object",
+          {
+            "host": "string",
+            "host_name": "string",
+            "private_ip": "string",
+            "server_id": "string"
+          }
+        ]
+      ]
+    ],
+    "value": [
+      {
+        "host": "168.119.114.44",
+        "host_name": "venue-nomad-server-1",
+        "private_ip": "10.0.1.2",
+        "server_id": "26629364"
+      },
+      {
+        "host": "5.75.158.105",
+        "host_name": "venue-nomad-server-2",
+        "private_ip": "10.0.1.3",
+        "server_id": "26629361"
+      },
+      {
+        "host": "167.235.154.25",
+        "host_name": "venue-nomad-server-3",
+        "private_ip": "10.0.1.4",
+        "server_id": "26629357"
+      }
+    ]
+  },
+  "o11y_servers": {
+    "sensitive": false,
+    "type": [
+      "tuple",
+      [
+        [
+          "object",
+          {
+            "host": "string",
+            "host_name": "string",
+            "private_ip": "string",
+            "server_id": "string"
+          }
+        ]
+      ]
+    ],
+    "value": [
+      {
+        "host": "116.203.206.106",
+        "host_name": "venue-observability-1",
+        "private_ip": "10.0.4.2",
+        "server_id": "26629359"
+      }
+    ]
+  },
+  "vault_servers": {
+    "sensitive": false,
+    "type": [
+      "tuple",
+      [
+        [
+          "object",
+          {
+            "host": "string",
+            "host_name": "string",
+            "private_ip": "string",
+            "server_id": "string"
+          }
+        ],
+        [
+          "object",
+          {
+            "host": "string",
+            "host_name": "string",
+            "private_ip": "string",
+            "server_id": "string"
+          }
+        ]
+      ]
+    ],
+    "value": [
+      {
+        "host": "5.75.167.153",
+        "host_name": "venue-vault-1",
+        "private_ip": "10.0.2.2",
+        "server_id": "26629365"
+      },
+      {
+        "host": "78.46.151.217",
+        "host_name": "venue-vault-2",
+        "private_ip": "10.0.2.3",
+        "server_id": "26629363"
+      }
+    ]
+  }
+}

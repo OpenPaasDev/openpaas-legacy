@@ -55,3 +55,10 @@ func TestLoadProviderConfig(t *testing.T) {
 	assert.Equal(t, expected, hetzner)
 	assert.Equal(t, []string{"85.4.84.201/32"}, conf.CloudProviderConfig.AllowedIPs)
 }
+
+func TestLoadTFExecVars(t *testing.T) {
+
+	theVar := LoadTFExecVars()
+
+	assert.NotNil(t, theVar)
+}

@@ -1,0 +1,45 @@
+dc_name: hetzner
+base_dir: config
+org_name: chaordic
+
+cluster_config:
+  servers: 3 # 3 or 5
+  clients: 2
+  vault_servers: 2
+  consul_volume_size: 10
+  separate_consul_servers: false
+  ingress:
+    management_domain: venue.dev
+  client_volumes:
+  - name: "data_vol"
+    client: "venue-client-1"
+    path: /opt/nomad_client_data
+    size: 20
+
+observability_config:
+  multi_instance: false # sets all on 1 server if false, 4 separate if true
+  tempo_bucket: tempo
+  loki_bucket: loki
+
+cloud_provider_config:
+  internal_network_interface_name: enp7s0 #ens10
+  sudo_user: root
+  sudo_dir: /root
+  provider: hetzner
+  # allowed_ips:
+  #   - 85.4.76.161/32
+  provider_settings:
+    location: nbg1
+    ssh_keys:
+    - wille.faler@gmail.com
+    load_balancer_type: lb11
+    ssl_certificate_ids:
+    - 1122373 # use Hetzner hcloud CLI tool to retrieve numeric ID: "hcloud certificate list"
+    server_instance_type: cx21
+    client_instance_type: cpx31
+    observability_instance_type: cpx21
+    resource_names:
+      base_server_name: venue
+      firewall_name: dev_firewall
+      network_name: dev_network
+

@@ -14,7 +14,7 @@ coverage:
 
 .PHONY: sync
 sync:
-	go run main.go sync --config.file=config.yaml
+	go run cmd/main.go sync --config.file=config.yaml
 
 .PHONY: destroy
 destroy:

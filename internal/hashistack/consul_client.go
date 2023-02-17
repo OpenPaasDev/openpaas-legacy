@@ -2,14 +2,12 @@ package hashistack
 
 import (
 	"fmt"
-	"io"
-	"log"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 
 	"github.com/OpenPaaSDev/openpaas/internal/ansible"
+	"github.com/OpenPaaSDev/openpaas/internal/runtime"
 	"github.com/OpenPaaSDev/openpaas/internal/secrets"
 )
 
@@ -44,7 +42,7 @@ func (client *consulBinary) Bootstrap() (string, error) {
 	path := filepath.Join(secretsDir, "consul-bootstrap.token")
 	exports := fmt.Sprintf(`export CONSUL_HTTP_ADDR="%s:8501" && export CONSUL_CLIENT_CERT=%s/secrets/consul/consul-agent-ca.pem && export CONSUL_CLIENT_KEY=%s/secrets/consul/consul-agent-ca-key.pem && export CONSUL_HTTP_SSL=true && export CONSUL_HTTP_SSL_VERIFY=false && `, host, client.baseDir, client.baseDir)
 
-	err := runCmd(fmt.Sprintf(`%s consul acl bootstrap > %s`, exports, path), os.Stdout)
+	err := runtime.Exec(&runtime.EmptyEnv{}, fmt.Sprintf(`%s consul acl bootstrap > %s`, exports, path), os.Stdout)
 	if err != nil {
 		return "", err
 	}
@@ -58,9 +56,7 @@ func (client *consulBinary) Bootstrap() (string, error) {
 
 func (client *consulBinary) RegisterACL(description, policy string) (string, error) {
 	tokenPath := filepath.Join(client.baseDir, "secrets", fmt.Sprintf("%s.token", policy))
-	err := client.runConsul(func(exports string) error {
-		return runCmd(fmt.Sprintf(`%sconsul acl token create -description "%s"  -policy-name %s > %s`, exports, description, policy, tokenPath), os.Stdout)
-	})
+	err := client.runConsul(fmt.Sprintf(`acl token create -description "%s"  -policy-name %s > %s`, description, policy, tokenPath))
 	if err != nil {
 		return "", err
 	}
@@ -68,37 +64,29 @@ func (client *consulBinary) RegisterACL(description, policy string) (string, err
 }
 
 func (client *consulBinary) UpdateACL(tokenID, policy string) error {
-	return client.runConsul(func(exports string) error {
-		return runCmd(fmt.Sprintf(`%sconsul acl token update -id %s -policy-name=%s`, exports, tokenID, policy), os.Stdout)
-	})
+	return client.runConsul(fmt.Sprintf(`acl token update -id %s -policy-name=%s`, tokenID, policy))
 }
 
 func (client *consulBinary) RegisterPolicy(name, file string) error {
-	return client.runConsul(func(exports string) error {
-		return runCmd(fmt.Sprintf(`%sconsul acl policy create -name %s -rules @%s`, exports, name, file), os.Stdout)
-	})
-
+	return client.runConsul(fmt.Sprintf(`acl policy create -name %s -rules @%s`, name, file))
 }
 
 func (client *consulBinary) UpdatePolicy(name, file string) error {
-	return client.runConsul(func(exports string) error {
-		return runCmd(fmt.Sprintf(`%sconsul acl policy update -name %s -rules @%s`, exports, name, file), os.Stdout)
-	})
+	return client.runConsul(fmt.Sprintf(`acl policy update -name %s -rules @%s`, name, file))
 }
 
 func (client *consulBinary) RegisterIntention(file string) error {
-	return client.runConsul(func(exports string) error {
-		return runCmd(fmt.Sprintf(`%sconsul config write %s`, exports, file), os.Stdout)
-	})
+	return client.runConsul(fmt.Sprintf(`config write %s`, file))
 }
 
 func (client *consulBinary) RegisterService(file string) error {
-	return client.runConsul(func(exports string) error {
-		return runCmd(fmt.Sprintf(`%sconsul services register %s`, exports, file), os.Stdout)
-	})
+	return client.runConsul(fmt.Sprintf(`services register %s`, file))
 }
 
 func (client *consulBinary) getExports() (string, error) {
+	if client.inventory == nil && client.secrets == nil {
+		return "", nil
+	}
 	hosts := client.inventory.All.Children.ConsulServers.GetHosts()
 	if len(hosts) == 0 {
 		return "", fmt.Errorf("no consul servers found in inventory")
@@ -110,18 +98,18 @@ func (client *consulBinary) getExports() (string, error) {
 	return exports, nil
 }
 
-func (client *consulBinary) runConsul(fn func(string) error) error {
+func (client *consulBinary) runConsul(consulCmd string) error {
 	exports, err := client.getExports()
 	if err != nil {
 		return err
 	}
-	return fn(exports)
+	return runtime.Exec(&runtime.EmptyEnv{}, fmt.Sprintf(`%sconsul %s`, exports, consulCmd), os.Stdout)
 }
 
 func parseConsulToken(file string) (string, error) {
 	content, err := os.ReadFile(filepath.Clean(file))
 	if err != nil {
-		log.Fatal(err)
+		return "", err
 	}
 
 	// Convert []byte to string and print to screen
@@ -133,17 +121,4 @@ func parseConsulToken(file string) (string, error) {
 		}
 	}
 	return "", nil
-}
-
-func runCmd(command string, stdOut io.Writer) error {
-	cmd := exec.Command("/bin/sh", "-c", command)
-
-	cmd.Stdout = stdOut
-	cmd.Stderr = os.Stderr
-
-	err := cmd.Start()
-	if err != nil {
-		return err
-	}
-	return cmd.Wait()
 }
