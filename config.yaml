@@ -29,7 +29,7 @@ cloud_provider_config:
   # allowed_ips:
   #   - 85.4.76.161/32
   provider_settings:
-    location: nbg1
+    location: fsn1
     ssh_keys:
     - wille.faler@gmail.com
     load_balancer_type: lb11
