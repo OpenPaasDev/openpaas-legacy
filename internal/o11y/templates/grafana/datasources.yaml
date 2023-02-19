@@ -1,0 +1,10 @@
+datasources:
+  - name: Loki
+    type: loki
+    url: http://loki-http.service.consul:3100
+  - name: Prometheus
+    type: prometheus
+    url: http://prometheus.service.consul:9090
+  - name: Tempo
+    type: tempo
+    url: http://tempo.service.consul:3200
