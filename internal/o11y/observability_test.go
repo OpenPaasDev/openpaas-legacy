@@ -35,7 +35,7 @@ func TestMkObservabilityConfigs(t *testing.T) {
 	assert.Equal(t, 6, len(consul.RegisterIntentionCalls()))
 	assert.Equal(t, 6, len(consul.RegisterServiceCalls()))
 
-	assert.Equal(t, 25, readDir(folder))
+	assert.Equal(t, 26, readDir(folder))
 }
 
 func readDir(str string) int {

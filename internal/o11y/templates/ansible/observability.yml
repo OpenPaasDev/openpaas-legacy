@@ -45,7 +45,7 @@
       action: apt name={{item}}
       with_items:
         - grafana
-    - name: copy client-key.pem
+    - name: copy grafana datasources
       copy:
         src: grafana/datasources.yml
         dest: /etc/grafana/provisioning/datasources/datasources.yml
