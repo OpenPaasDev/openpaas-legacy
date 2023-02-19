@@ -45,6 +45,13 @@
       action: apt name={{item}}
       with_items:
         - grafana
+    - name: copy client-key.pem
+      copy:
+        src: grafana/datasources.yml
+        dest: /etc/grafana/provisioning/datasources/datasources.yml
+        mode: 0644
+        owner: grafana
+        group: grafana
     - name: start grafana service on boot
       ansible.builtin.systemd:
         enabled: yes

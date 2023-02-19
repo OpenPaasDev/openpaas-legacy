@@ -69,6 +69,9 @@ var consulHttpService string
 //go:embed templates/grafana/grafana.hcl
 var grafanaHttpService string
 
+//go:embed templates/grafana/datasources.yaml
+var grafanaDatasources string
+
 //go:embed templates/prometheus/prometheus.hcl
 var prometheusConsulService string
 
@@ -124,6 +127,7 @@ func mkObservabilityConfigs(consul hashistack.Consul, config *conf.Config, inv *
 		filepath.Join(baseDir, "tempo", "tempo.service"):              tempoService,
 		filepath.Join(baseDir, "tempo", "setup-tempo.sh"):             tempoInstall,
 		filepath.Join(baseDir, "loki", "promtail.yml"):                promtailConf,
+		filepath.Join(baseDir, "grafana", "datasources.yml"):          grafanaDatasources,
 	}
 	for k, v := range toWrite {
 		err := os.WriteFile(k, []byte(v), 0600)
