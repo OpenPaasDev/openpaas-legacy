@@ -1,3 +1,7 @@
+# Archived - see https://github.com/OpenPaasDev/core
+This project is archived, but not dead, Please see [OpenPaas Core](https://github.com/OpenPaasDev/core) instead.
+This project has picked the best parts out of this codebase, while making it less coupled to the HashiCorp stack, in light of the HashiCorp license change.
+
 # OpenPaaS
 Single-command: `openpaas sync --config.file config.yaml` that sets up a full _"Hashistack"_ cluster consisting of:
 * Infrastructure 
